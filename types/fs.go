@@ -9,11 +9,11 @@ type Tp_general struct {
 	Testsize            int    // Used to limit number of records posted, over rided when reading test cases from input_source,
 	Sleep               int    // sleep time between API post
 	Httpposturl         string // FeatureSpace API URL
+	Call_fs_api         int
 	Cert_dir            string
 	Cert_file           string
 	Cert_key            string
-	Call_fs_api         int     // Do we call the API endpoint
-	Eventtype           string  // paymentRT or paymentNRT
+	Datamode            string  // rpp or hist
 	Json_to_file        int     // Do we output JSON to file in output_path
 	Output_path         string  // output location
 	Json_from_file      int     // Do we read JSON from input_path directory and post to FS API endpoint
@@ -22,9 +22,8 @@ type Tp_general struct {
 	MaxTransactionValue float64 // Max value of the fake transaction
 	SeedFile            string  // Which seed file to read in
 	EchoSeed            int     // 0/1 Echo the seed data to terminal
-	IntroBadEntity      int
-	IntroBadPayer       int
-	IntroBadAgent       int
+	CurrentPath         string  // current
+	OSName              string  // OS name
 }
 
 // FS engineResponse components
@@ -35,6 +34,43 @@ type TAmount struct {
 	Value            float64 `json:"value,omitempty"`
 	MerchantCurrency string  `json:"merchantCurrency,omitempty"`
 	MerchantValue    float64 `json:"merchantValue,omitempty"`
+}
+
+type TCodeStruct struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+type TTransactionTypeNRT struct {
+	EFT []TCodeStruct `json:"eft,omitempty"`
+	EDO []TCodeStruct `json:"edo,omitempty"`
+	RTC []TCodeStruct `json:"rtc,omitempty"`
+	ACD []TCodeStruct `json:"acd,omitempty"`
+}
+type TIdCodes struct {
+	EFT []TCodeStruct `json:"eft,omitempty"`
+	ACD []TCodeStruct `json:"acd,omitempty"`
+	RTC []TCodeStruct `json:"rtc,omitempty"`
+}
+
+type TLocalInstrument struct {
+	HIST []TCodeStruct `json:"hist,omitempty"`
+	RPP  []TCodeStruct `json:"rpp,omitempty"`
+}
+
+type TPSeed struct {
+	Decoration               []string            `json:"decoration,omitempty"`
+	PaymentStreamNRT         []string            `json:"paymentStreamNRT,omitempty"`
+	TransactionTypeNRT       TTransactionTypeNRT `json:"transactionTypes,omitempty"`
+	LocalInstrument          TLocalInstrument    `json:"localInstrument,omitempty"`
+	IdCodes                  TIdCodes            `json:"idCodes,omitempty"`
+	ChargeBearers            []string            `json:"chargeBearers,omitempty"`
+	RemittanceLocationMethod []string            `json:"remittanceLocationMethod,omitempty"`
+	SettlementMethod         []string            `json:"settlementMethod,omitempty"`
+	VerificationResult       []string            `json:"verificationResult,omitempty"`
+	PaymentFrequency         []string            `json:"paymentFrequency,omitempty"`
+	Tenants                  TTenants            `json:"tenants,omitempty"`
+	Accounts                 TAccounts           `json:"accounts,omitempty"`
 }
 
 type TAddress struct {
@@ -138,37 +174,20 @@ type TAccount struct {
 	TenantId      string   `json:"tenantid,omitempty"`
 	AccountNumber string   `json:"accountnumber,omitempty"`
 	Address       TAddress `json:"address,omitempty"`
-}
-
-type TPSeed struct {
-	Decoration               []string `json:"decoration,omitempty"`
-	Direction                []string `json:"direction,omitempty"`
-	TransactionTypesNrt      []string `json:"transactionTypesNrt,omitempty"`
-	TransactionTypesRt       []string `json:"transactionTypesRt,omitempty"`
-	ChargeBearers            []string `json:"chargeBearers,omitempty"`
-	RemittanceLocationMethod []string `json:"remittanceLocationMethod,omitempty"`
-	SettlementMethod         []string `json:"settlementMethod,omitempty"`
-	VerificationResult       []string `json:"verificationResult,omitempty"`
-	PaymentFrequency         []string `json:"paymentFrequency,omitempty"`
-
-	Tenants TTenants `json:"tenants,omitempty"`
-	//	TenantsRT  []TTenant `json:"tenantsrt,omitempty"`
-	//	TenantsNRT []TTenant `json:"tenantsnrt,omitempty"`
-
-	Accounts TAccounts `json:"accounts,omitempty"`
-	// GoodAccounts []TAccount `json:"goodAccounts,omitempty"`
-	// BadAccounts  []TAccount `json:"badAccounts,omitempty"`
-
-}
-
-type TTenants struct {
-	RT  []TTenant `json:"rt,omitempty"`
-	NRT []TTenant `json:"nrt,omitempty"`
+	AccountIDCode string   `json:"accountidcode,omitempty"`
+	ProxyId       string   `json:"proxyid,omitempty"`
+	ProxyType     string   `json:"proxytype,omitempty"`
+	ProxyDomain   string   `json:"proxydomain,omitempty"`
 }
 
 type TAccounts struct {
 	Good []TAccount `json:"good,omitempty"`
 	Bad  []TAccount `json:"bad,omitempty"`
+}
+
+type TTenants struct {
+	RT  []TTenant `json:"rt,omitempty"`
+	NRT []TTenant `json:"nrt,omitempty"`
 }
 
 type TPaymentNRT = struct {

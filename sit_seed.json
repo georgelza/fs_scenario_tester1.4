@@ -1,0 +1,1646 @@
+{
+
+    "Decoration": [
+        "decorationId_0"
+    ],
+    
+    "PaymentStreamNRT": [ 
+        "EFT",             # MSGType:  EFT   {"name": "EFT", "msgtype":"EFT"}
+        "RTC",             # MSGType:  RTCCT {"name": "RTC", "msgtype":"RTCCT"}
+        "ACD"              # MSGType:  900000 {"name": "ACD", "msgtype":"900000"}
+    ],
+
+    "LocalInstrument": {
+      "RPP" : [
+         {"name": "1", "value": "PBPX"},     # PBPX - Pay By Proxy 
+         {"name": "2", "value": "PBAC"},     # Pay By Account 
+         {"name": "3", "value": "RTP-PBPX"}, # Request to Pay: Pay By Proxy 
+         {"name": "4", "value": "RTP-PBAC"}  # Request to Pay: Pay By Account
+      ], 
+      "HIST": [                              # aka RecordID
+         {"name": "1", "value": "TRANSMISSION HEADER"},
+         {"name": "2", "value": "INSTALLATION HEADER"},
+         {"name": "4", "value": "USER HEADER"},
+         {"name": "5", "value": "AUTHENTICATED EARLY DEBIT ORDER"},
+         {"name": "10", "value": "CREDIT TRANSACTION"},
+         {"name": "12", "value": "CREDIT CONTRA "},
+         {"name": "14", "value": "CREDIT STOP ORDER  "},
+         {"name": "16", "value": "CREDIT STOP ORDER CONTRA"},
+         {"name": "20", "value": "CONSOLIDATED CREDIT UNPAID"},
+         {"name": "21", "value": "CREDIT UNPAID"},
+         {"name": "23", "value": "CREDIT UNPAID CONTRA"},
+         {"name": "24", "value": "CREDIT RE-DIRECT "},
+         {"name": "26", "value": "CREDIT RE-DIRECT CONTRA"},
+         {"name": "30", "value": "INTERBANK CREDIT TRANSFER"},
+         {"name": "32", "value": "INTERBANK CREDIT TRANSFER CONTRA"},
+         {"name": "33", "value": "RECALL CREDIT CONTRA"},
+         {"name": "35", "value": "DISPUTED NON-AUTHENTICATED EARLY DEBIT ORDER "},
+         {"name": "42", "value": "REAL TIME CLEARANCE"},
+         {"name": "50", "value": "DEBIT TRANSACTION"},
+         {"name": "52", "value": "TRANSACTION CONTRA"},
+         {"name": "54", "value": "DEBIT STOP ORDER"},
+         {"name": "55", "value": "NON-AUTHENTICATED EARLY DEBIT ORDER"},
+         {"name": "56", "value": "DEBIT STOP ORDER CONTRA "},
+         {"name": "60", "value": "CONSOLIDATED UNPAID DEBIT "},
+         {"name": "61", "value": "UNPAID DEBIT TRANSACTION"},
+         {"name": "63", "value": "UNPAID DEBIT TRANSACTION CONTRA"},
+         {"name": "64", "value": "DEBIT RE-DIRECT "},
+         {"name": "66", "value": "DEBIT RE-DIRECT CONTRA"},
+         {"name": "81", "value": "DEBIT RECALL"},
+         {"name": "83", "value": "DEBIT RECALL CONTRA "},
+         {"name": "84", "value": "NONFIN RE-DIRECT TRANSACTION"},
+         {"name": "86", "value": "NONFINE RE-DIRECT CONTRA "},
+         {"name": "92", "value": "USER TRAILER RECORD"},
+         {"name": "93", "value": "END OF REEL MARKER "},
+         {"name": "94", "value": "INSTALLATION TRAILER"},
+         {"name": "96", "value": "SETTLEMENT SPONSORED RECORD"},
+         {"name": "97", "value": "OUTPUT SETTLEMENT TOTALS"},
+         {"name": "98", "value": "END OF SERVICE RECORD"},
+         {"name": "99", "value": "TRANSMISSION TRAILER RECORD"},
+         {"name": "31", "value": "RECALL CREDIT"},
+         {"name": "58", "value": "DEBIT RESPONSE"}
+      ]
+    },
+
+    "TransactionTypeNRT": {  # NRT Only
+         "EFT":[
+            {"name": "59", "value": "BankservAfrica Use - Service Charge"}, 
+            {"name": "61", "value": "Salary"}, 
+            {"name": "62", "value": "Pension"},
+            {"name": "63", "value": "P.A.Y.E."}, 
+            {"name": "64", "value": "Salary Deduction: Mortgage Bond Repayment"}, 
+            {"name": "65", "value": "Salary Deduction: Insurance Premium"},
+            {"name": "66", "value": "Mortgage Bond Repayment"}, 
+            {"name": "67", "value": "Value Added Tax (Vat payment)"}, 
+            {"name": "68", "value": "Bank Use - Mortgage Bond Settlement"}, 
+            {"name": "69", "value": "Salary Deduction: Miscellaneous"}, 
+            {"name": "70", "value": "Annuity"}, 
+            {"name": "71", "value": "Dividend"}, 
+            {"name": "72", "value": "Interest"},
+            {"name": "73", "value": "Undefined"},
+            {"name": "75", "value": "Agents Commission"},
+            {"name": "76", "value": "Bank use – Cheque Card Credit Reversals"},
+            {"name": "80", "value": "Insurance Premium Refund"},
+            {"name": "81", "value": "Payment to Creditor "},
+            {"name": "82", "value": "Payment of Insurance Claims "},
+            {"name": "83", "value": "Medical Aid Refunds "},
+            {"name": "86", "value": "Unit Trust Repurchase "},
+            {"name": "88", "value": "Bank Use - Credit Transfer "},
+            {"name": "91", "value": "BankservAfrica Use - Service Charge"},
+            {"name": "92", "value": "BankservAfrica Use"},
+            {"name": "93", "value": "BankservAfrica Use"},
+            {"name": "94", "value": "Bank Use - Credit Card Merchant - Electronic Funds Transfer"},
+            {"name": "95", "value": "Bank Use - Credit Card Holder - Electronic Funds Transfer "},
+            {"name": "96", "value": "Bank Use - Commission Payment, Garage Card"},
+            {"name": "97", "value": "Bank Use - Refund, Garage Card"},
+            {"name": "10", "value": "Contra"},
+            {"name": "11", "value": "Consolidated Unpaid "},
+            {"name": "13", "value": "Non-Consolidated Unpaid "},
+            {"name": "15", "value": "Undefined"},
+            {"name": "17", "value": "Undefined"},
+            {"name": "18", "value": "Undefined"},
+            {"name": "21", "value": "Insurance Premium"},
+            {"name": "22", "value": "Pension Fund Contribution"},
+            {"name": "23", "value": "Medical Aid Fund Contribution"},
+            {"name": "25", "value": "Undefined"},
+            {"name": "26", "value": "Unit Trust Purchase"},
+            {"name": "28", "value": "Charitable or Religious Contribution"},
+            {"name": "29", "value": "Undefined"},
+            {"name": "30", "value": "Undefined"},
+            {"name": "31", "value": "H.P. Repayment "},
+            {"name": "32", "value": "Account Repayment "},
+            {"name": "33", "value": "Loan Repayment (other than Mortgage) "},
+            {"name": "34", "value": "Rental-Lease (other than Property)"},
+            {"name": "35", "value": "Service Charge (Maintenance of Service Agreements, etc -Fixed Amounts)"},
+            {"name": "36", "value": "Service Charge (Variable Amounts)"},
+            {"name": "37", "value": "Value Added Tax (VAT Collection) "},
+            {"name": "39", "value": "Undefined"},
+            {"name": "41", "value": "Rent (Property)"},
+            {"name": "42", "value": "Bond Repayment "},
+            {"name": "44", "value": "Bank Use - Debit Transfer"},
+            {"name": "46", "value": "Bank use – Cheque Card Debits"},
+            {"name": "49", "value": "BankservAfrica use only – Financial return of Disputes greater than 40 days"},
+            {"name": "51", "value": "Municipal Accounts: Water and Light"},
+            {"name": "52", "value": "Municipal Accounts: Rates "},
+            {"name": "53", "value": "Telephone Accounts"},
+            {"name": "54", "value": "Bank Use - Credit Card Merchant - Electronic Funds Transfer"},
+            {"name": "55", "value": "Bank Use - Credit Card Holder - Electronic Funds Transfer"},
+            {"name": "56", "value": "Bank Use - Service charge exempt from duty and service fee "},
+            {"name": "57", "value": "Bank Use - Garage Card"},
+            {"name": "58", "value": "Bank Use - Service Charge"}
+         ],
+
+         "EDO": [
+            {"name": "01", "value": "EDO 2  Day Tracking"},
+            {"name": "02", "value": "EDO 4 Day Tracking "},
+            {"name": "03", "value": "EDO 5 Day Tracking"},
+            {"name": "04", "value": "EDO 6 Day Tracking"},
+            {"name": "05", "value": "EDO 7 Day Tracking"},
+            {"name": "06", "value": "EDO 8 Day Tracking"},
+            {"name": "07", "value": "EDO 9 Day Tracking"},
+            {"name": "12", "value": "EDO No Tracking"},
+            {"name": "13", "value": "EDO 1 Day Tracking"},
+            {"name": "14", "value": "EDO 3 Day Tracking"},
+            {"name": "15", "value": "EDO 7 Day Tracking"},
+            {"name": "16", "value": "EDO 14 Day Tracking"},
+            {"name": "17", "value": "EDO 21 Day Tracking"},
+            {"name": "18", "value": "EDO 32 Day Tracking"},
+            {"name": "19", "value": "EDO Stop Presentation"}
+         ],
+
+         "RTC": [
+            {"name": "42", "value": "Real Time Clearance"}
+         ],
+
+         "ACD": [
+            {"name": "00", "value": "Dummy for Billing"},
+            {"name": "10", "value": "Contra"},
+            {"name": "21", "value": "Insurance Premium "},
+            {"name": "22", "value": "Pension Fund Contribution "},
+            {"name": "23", "value": "Medical Aid Fund Contribution"},
+            {"name": "26", "value": "Unit Trust Purchase"},
+            {"name": "28", "value": "Charitable or Religious Contribution"},
+            {"name": "31", "value": "H.P. Repayment "},
+            {"name": "32", "value": "Account Repayment"},
+            {"name": "33", "value": "Loan Repayment (other than Mortgage) "},
+            {"name": "34", "value": "Rental-Lease (other than Property)"},
+            {"name": "35", "value": "Service Charge (Maintenance of Service Agreements, etc -Fixed Amounts)"},
+            {"name": "36", "value": "Service Charge (Variable Amounts)    "},
+            {"name": "37", "value": "Value Added Tax (VAT Collection)"},
+            {"name": "41", "value": "Rent (Property) "},
+            {"name": "42", "value": "Bond Repayment"},
+            {"name": "44", "value": "Bank Use - Debit Transfer "},
+            {"name": "46", "value": "Bank use – Cheque Card Debits "},
+            {"name": "53", "value": "Telephone Accounts "},
+            {"name": "54", "value": "Bank Use - Credit Card Merchant - Electronic Funds Transfer"},
+            {"name": "55", "value": "Bank Use - Credit Card Holder - Electronic Funds Transfer"},
+            {"name": "56", "value": "Bank Use - Service charge exempt from duty and service fee "},
+            {"name": "57", "value": "Bank Use - Garage Card  "},
+            {"name": "58", "value": "Bank Use - Service Charge"},
+            {"name": "59", "value": "BankservAfrica Use - Service Charge "},
+            {"name": "61", "value": "Salary"},
+            {"name": "62", "value": "Pension"},
+            {"name": "63", "value": "P.A.Y.E."},
+            {"name": "64", "value": "Salary Deduction: Mortgage Bond Repayment "},
+            {"name": "65", "value": "Salary Deduction: Insurance Premium"},
+            {"name": "66", "value": "Mortgage Bond Repayment  "},
+            {"name": "67", "value": "Value Added Tax (Vat payment)"},
+            {"name": "68", "value": "Bank Use - Mortgage Bond Settlement "},
+            {"name": "69", "value": "Salary Deduction: Miscellaneous"},
+            {"name": "70", "value": "Annuity"},
+            {"name": "71", "value": "Dividend"},
+            {"name": "72", "value": "Interest"},
+            {"name": "75", "value": "Agents Commission"},
+            {"name": "80", "value": "Insurance Premium Refund "},
+            {"name": "81", "value": "Payment to Creditor "},
+            {"name": "82", "value": "Payment of Insurance Claims "},
+            {"name": "83", "value": "Medical Aid Refunds"},
+            {"name": "86", "value": "Unit Trust Repurchase"},
+            {"name": "88", "value": "Bank Use - Credit Transfer "},
+            {"name": "91", "value": "BankservAfrica Use - Service Charge"},
+            {"name": "92", "value": "BankservAfrica Use"},
+            {"name": "93", "value": "BankservAfrica Use"},
+            {"name": "94", "value": "Bank Use - Credit Card Merchant - Electronic Funds Transfer"},
+            {"name": "95", "value": "Bank Use - Credit Card Holder - Electronic Funds Transfer"},
+            {"name": "96", "value": "Bank Use - Commission Payment, Garage Card"},
+            {"name": "97", "value": "Bank Use - Refund, Garage Card "}
+         ]
+    },
+
+    "ChargeBearers": [              # Potentially Remove
+        "DEBT",
+        "CRED",
+        "SHAR",
+        "SLEV"
+    ],
+
+    "RemittanceLocationMethod": [   # Potentially Remove
+        "FAXI",
+        "EDIC",
+        "URID",
+        "EMAL",
+        "POST",
+        "SMSM"
+    ],
+    
+    "SettlementMethod": [           # RPP Methods - Potentially Remove
+        "INDA",
+        "INGA",
+        "COVE",
+        "CLRG"
+    ],
+
+    "VerificationResult": [         # Potentially Remove
+        "FAIL",
+        "FUTA",
+        "MISS",
+        "NOVF",
+        "OTHN",
+        "OTHP",
+        "PART",
+        "SUCC",
+        "ERRR"
+    ],
+
+    "PaymentFrequency": [           # Potentially Remove
+        "YEAR",
+        "MNTH",
+        "QURT",
+        "MAIN",
+        "WEEK",
+        "DAIL",
+        "ADHO",
+        "INDA",
+        "FRTN"
+    ],
+
+    "IdCodes": {
+      "EFT": [
+         {"name":"00", "value": "Not Specified"},
+         {"name":"01", "value": "Current / Cheque "},
+         {"name":"02", "value": "Savings"},
+         {"name":"03", "value": "Transmission"},
+         {"name":"04", "value": "Bond"},
+         {"name":"06", "value": "Subscription Share"}
+      ],
+      "RTC": [
+         {"name":"00", "value": "Not Specified"},
+         {"name":"20", "value": "Current / Cheque "},
+         {"name":"10", "value": "Savings"},
+         {"name":"30", "value": "Credit"}
+      ],
+      "ACD": [
+         {"name":"00", "value": "Not Specified"},
+         {"name":"01", "value": "Current / Cheque "},
+         {"name":"02", "value": "Savings"},
+         {"name":"03", "value": "Transmission"},
+         {"name":"04", "value": "Bond"},
+         {"name":"06", "value": "Subscription Share"}
+      ]
+   },
+
+    "Accounts": {
+        "Good":[
+           {
+              "Id":"1001",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"1239656234",
+              "AccountIDCode": "10",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489566",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1002",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"6333456457",
+              "AccountIDCode": "20",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1003",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23444545345",
+              "AccountIDCode": "20",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1004",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"23434645345",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489263",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1005",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Gert",
+                 "surname":"Van Der Merwe"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23234545345",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489562",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1006",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Ciljee",
+                 "surname":"Klopper"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"23434544345",
+              "AccountIDCode": "01",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489523",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1007",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Mari",
+                 "surname":"Engelbrecght"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23434545345",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0731489563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1008",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Manny",
+                 "surname":"Groenewaldt"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"23474545345",
+              "AccountIDCode": "02",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631289563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1009",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23436545345",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489561",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1011",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Sandy",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "06",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489567",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1012",
+              "Name":{
+                 "namePrefix":"Miss",
+                 "fullName":"Liezel",
+                 "surname":"Smith"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489583",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1013",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Anna",
+                 "surname":"Cronje"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "01",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489568",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1014",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Cara",
+                 "surname":"Pieters"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "02",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489560",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1015",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"1239656234",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0631489163",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1016",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"6333456457",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1017",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23444545345",
+              "AccountIDCode": "06",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489561",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1018",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"23434645345",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489568",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1019",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Gert",
+                 "surname":"Van Der Merwe"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23234545345",
+              "AccountIDCode": "02",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831481563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1020",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Ciljee",
+                 "surname":"Klopper"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23434544345",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489555",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1021",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Mari",
+                 "surname":"Engelbrecght"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545345",
+              "AccountIDCode": "01",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489566",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1022",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Manny",
+                 "surname":"Groenewaldt"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"23474545345",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489533",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1023",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23436545345",
+              "AccountIDCode": "10",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489553",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1024",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Sandy",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "20",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831489555",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1025",
+              "Name":{
+                 "namePrefix":"Miss",
+                 "fullName":"Liezel",
+                 "surname":"Smith"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "30",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831488563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1026",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Anna",
+                 "surname":"Cronje"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "20",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831189563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1027",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Cara",
+                 "surname":"Pieters"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "10",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831488563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1028",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"239656234",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0834489563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1029",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"3633456457",
+              "AccountIDCode": "01",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831449563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1030",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"George",
+                 "surname":"Simpson"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"24344545345",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0831455563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1031",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Botha"
+              },
+              "TenantId":"210001",
+              "AccountNumber":"24334645345",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455563",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1032",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Gert",
+                 "surname":"Van Der Merwe"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23324545345",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455562",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1033",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Ciljee",
+                 "surname":"Klopper"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23344544345",
+              "AccountIDCode": "06",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455561",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1034",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Mari",
+                 "surname":"Engelbrecght"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"23443545345",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455566",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1035",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Manny",
+                 "surname":"Groenewaldt"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23447545345",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455555",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1036",
+              "Name":{
+                 "namePrefix":"Mr",
+                 "fullName":"Mark",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23435645345",
+              "AccountIDCode": "02",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455556",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1037",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Sandy",
+                 "surname":"Geldenhuys"
+              },
+              "TenantId":"210010",
+              "AccountNumber":"23434545845",
+              "AccountIDCode": "01",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455557",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1038",
+              "Name":{
+                 "namePrefix":"Miss",
+                 "fullName":"Liezel",
+                 "surname":"Smith"
+              },
+              "TenantId":"210016",
+              "AccountNumber":"23434554845",
+              "AccountIDCode": "00",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455558",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1039",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Anna",
+                 "surname":"Cronje"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23434545485",
+              "AccountIDCode": "03",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455559",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"1040",
+              "Name":{
+                 "namePrefix":"Mrs",
+                 "fullName":"Cara",
+                 "surname":"Pieters"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"23434548545",
+              "AccountIDCode": "04",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455536",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           }
+        ],
+        "Bad":[
+           {
+              "Id":"9001",
+              "Name":{
+                 "NamePrefix":"Mr",
+                 "FullName":"Mark",
+                 "Surname":"Lourens"
+              },
+              "TenantId":"210002",
+              "AccountNumber":"23434545345",
+              "AccountIDCode": "06",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455537",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           },
+           {
+              "Id":"9002",
+              "Name":{
+                 "NamePrefix":"Mr",
+                 "FullName":"Neil",
+                 "Surname":"Botha"
+              },
+              "TenantId":"210003",
+              "AccountNumber":"2343445345",
+              "AccountIDCode": "02",
+              "Address":{
+                 "addressLine1":"streetName",
+                 "addressLine2":"buildingNumber and buildingName",
+                 "country":"ZAF",
+                 "countrySubDivision":"countrySubDivision",
+                 "postalCode":"1234",
+                 "townName":"townName",
+                 "fullAddress":"addressLine"
+              },
+              "ProxyId": "0811455538",
+              "ProxyType": "CTT.proxyType",
+              "ProxyDomain":"CTT.domain"
+           }
+        ]
+     },
+
+     "Tenants": {
+      "RT":[
+          {
+          "Name":"Standard Bank",
+          "TenantId":"210001",
+          "BranchRangeStart":0,
+          "BranchRangeEnd":60066,
+          "Bicfi":"SBZAZAJJ"
+          },
+          {
+          "Name":"Nedbank",
+          "TenantId":"210002",
+          "BranchRangeStart":100000,
+          "BranchRangeEnd":199999,
+          "Bicfi":"NEDSZAJJ"
+          },
+          {
+          "Name":"Firstrand Bank",
+          "TenantId":"210003",
+          "BranchRangeStart":200000,
+          "BranchRangeEnd":299999,
+          "Bicfi":"FIRNZAJJ"
+          },
+          {   # Bank Division/Branch Name, please enter
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":300000,
+          "BranchRangeEnd":349999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {    # Bank Division/Branch Name, please enter
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":420000,
+          "BranchRangeEnd":429999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {    # Bank Division/Branch Name, please enter
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":500000,
+          "BranchRangeEnd":569999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {    # Bank Division/Branch Name, please enter
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":609000,
+          "BranchRangeEnd":639999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {    # Bank Division/Branch Name, please enter
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":640000,
+          "BranchRangeEnd":659999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"Capitect Bank",
+          "TenantId":"210010",
+          "BranchRangeStart":470000,
+          "BranchRangeEnd":470999,
+          "Bicfi":"CABLZAJJ"
+          },
+          {
+          "Name":"Discovery Bank",
+          "TenantId":"210063",
+          "BranchRangeStart":679000,
+          "BranchRangeEnd":679999,
+          "Bicfi":"DISCZAJJ"
+          }
+      ],
+
+      "NRT": 
+      [
+          {
+          "Name":"Standard Bank",
+          "TenantId":"210001",
+          "BranchRangeStart":0,
+          "BranchRangeEnd":60066,
+          "Bicfi":"SBZAZAJJ"
+          },
+          {
+          "Name":"Standard Lesotho Bank",
+          "TenantId":"210046",
+          "BranchRangeStart":60067,
+          "BranchRangeEnd":63967
+          },
+          {
+          "Name":"Nedbank",
+          "TenantId":"210002",
+          "BranchRangeStart":100000,
+          "BranchRangeEnd":199999,
+          "Bicfi":"NEDSZAJJ"
+          },
+          {
+          "Name":"Firstrand Bank",
+          "TenantId":"210003",
+          "BranchRangeStart":200000,
+          "BranchRangeEnd":299999,
+          "Bicfi":"FIRNZAJJ"
+          },
+          {
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":300000,
+          "BranchRangeEnd":349999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":420000,
+          "BranchRangeEnd":429999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":500000,
+          "BranchRangeEnd":569999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":609000,
+          "BranchRangeEnd":639999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"ABSA",
+          "TenantId":"210016",
+          "BranchRangeStart":640000,
+          "BranchRangeEnd":659999,
+          "Bicfi":"ABSAZAJJ"
+          },
+          {
+          "Name":"Capitect Bank",
+          "TenantId":"210010",
+          "BranchRangeStart":470000,
+          "BranchRangeEnd":470999,
+          "Bicfi":"CABLZAJJ"
+          },
+          {
+          "Name":"Discovery Bank",
+          "TenantId":"210063",
+          "BranchRangeStart":679000,
+          "BranchRangeEnd":679999,
+          "Bicfi":"DISCZAJJ"
+          },
+          {
+          "Name":"Citybank",
+          "TenantId":"210033",
+          "BranchRangeStart":350000,
+          "BranchRangeEnd":350999
+          },
+          {
+          "Name":"SOCIETE GENERALE JHB BRANCH",
+          "TenantId":"210045",
+          "BranchRangeStart":351000,
+          "BranchRangeEnd":351999
+          },
+          {
+          "Name":"Nedbank Swaziland",
+          "TenantId":"210037",
+          "BranchRangeStart":360000,
+          "BranchRangeEnd":360999
+          },
+          {
+          "Name":"ICICI Bank",
+          "TenantId":"210062",
+          "BranchRangeStart":362000,
+          "BranchRangeEnd":362999
+          },
+          {
+          "Name":"Nedbank Lesotho",
+          "TenantId":"210038",
+          "BranchRangeStart":390000,
+          "BranchRangeEnd":390999
+          },
+          {
+          "Name":"Peoples Bank PEP",
+          "TenantId":"210005",
+          "BranchRangeStart":400000,
+          "BranchRangeEnd":400999
+          },
+          {
+          "Name":"Access Bank",
+          "TenantId":"210006",
+          "BranchRangeStart":410000,
+          "BranchRangeEnd":419999
+          },
+          {
+          "Name":"African Bank",
+          "TenantId":"210007",
+          "BranchRangeStart":410000,
+          "BranchRangeEnd":419999
+          },
+          {
+          "Name":"UBank",
+          "TenantId":"210019",
+          "BranchRangeStart":431000,
+          "BranchRangeEnd":431999
+          },
+          {
+          "Name":"JP Morgan",
+          "TenantId":"210056",
+          "BranchRangeStart":432000,
+          "BranchRangeEnd":432999
+          },
+          {
+          "Name":"BOE Bank",
+          "TenantId":"210008",
+          "BranchRangeStart":440000,
+          "BranchRangeEnd":449999
+          },
+          {
+          "Name":"Capitec Business",
+          "TenantId":"210009",
+          "BranchRangeStart":450000,
+          "BranchRangeEnd":459999
+          },
+          {
+          "Name":"SA Postbank",
+          "TenantId":"210013",
+          "BranchRangeStart":460000,
+          "BranchRangeEnd":460999
+          },
+          {
+          "Name":"Nedbank Namibia",
+          "TenantId":"210043",
+          "BranchRangeStart":461000,
+          "BranchRangeEnd":461999
+          },
+          {
+          "Name":"Bidvest Bank",
+          "TenantId":"210044",
+          "BranchRangeStart":462000,
+          "BranchRangeEnd":462999
+          },
+          {
+          "Name":"Bank Windhoek",
+          "TenantId":"210014",
+          "BranchRangeStart":480000,
+          "BranchRangeEnd":489999
+          },
+          {
+          "Name":"MTN Banking",
+          "TenantId":"210011",
+          "BranchRangeStart":490000,
+          "BranchRangeEnd":490999
+          },
+          {
+          "Name":"HBZ Bank",
+          "TenantId":"210036",
+          "BranchRangeStart":490000,
+          "BranchRangeEnd":490999
+          },
+          {
+          "Name":"Investec",
+          "TenantId":"210039",
+          "BranchRangeStart":580000,
+          "BranchRangeEnd":580999
+          },
+          {
+          "Name":"Grindrod",
+          "TenantId":"210047",
+          "BranchRangeStart":584000,
+          "BranchRangeEnd":584999
+          },
+          {
+          "Name":"Olympsus Mobile",
+          "TenantId":"210049",
+          "BranchRangeStart":585000,
+          "BranchRangeEnd":585999
+          },
+          {
+          "Name":"HSBC",
+          "TenantId":"210051",
+          "BranchRangeStart":587000,
+          "BranchRangeEnd":587999
+          },
+          {
+          "Name":"VBS",
+          "TenantId":"210054",
+          "BranchRangeStart":588000,
+          "BranchRangeEnd":588999
+          },
+          {
+          "Name":"China Construction Bank",
+          "TenantId":"210060",
+          "BranchRangeStart":586000,
+          "BranchRangeEnd":586999
+          },
+          {
+          "Name":"Finbond",
+          "TenantId":"210055",
+          "BranchRangeStart":589000,
+          "BranchRangeEnd":589999
+          },
+          {
+          "Name":"Findbond Net1",
+          "TenantId":"210065",
+          "BranchRangeStart":591000,
+          "BranchRangeEnd":591999
+          },
+          {
+          "Name":"Standard Bank Swaziland",
+          "TenantId":"210017",
+          "BranchRangeStart":660000,
+          "BranchRangeEnd":669999
+          },
+          {
+          "Name":"Tyme Bank",
+          "TenantId":"210061",
+          "BranchRangeStart":678000,
+          "BranchRangeEnd":678999
+          },
+          {
+          "Name":"SASFIN Bank",
+          "TenantId":"210058",
+          "BranchRangeStart":683000,
+          "BranchRangeEnd":683999
+          },
+          {
+          "Name":"Bank of China",
+          "TenantId":"210057",
+          "BranchRangeStart":686000,
+          "BranchRangeEnd":686999
+          },
+          {
+          "Name":"BNP Paribas",
+          "TenantId":"210059",
+          "BranchRangeStart":688000,
+          "BranchRangeEnd":688999
+          },
+          {
+          "Name":"Habib",
+          "TenantId":"210022",
+          "BranchRangeStart":700000,
+          "BranchRangeEnd":709999
+          },
+          {
+          "Name":"Peoples Bank NBS",
+          "TenantId":"210024",
+          "BranchRangeStart":720000,
+          "BranchRangeEnd":729999
+          },
+          {
+          "Name":"Standard Chartered Bank",
+          "TenantId":"210042",
+          "BranchRangeStart":730000,
+          "BranchRangeEnd":730999
+          },
+          {
+          "Name":"ABSA Ithala",
+          "TenantId":"210030",
+          "BranchRangeStart":750000,
+          "BranchRangeEnd":759999
+          },
+          {
+          "Name":"Permanent Bank",
+          "TenantId":"210026",
+          "BranchRangeStart":760000,
+          "BranchRangeEnd":769000
+          },
+          {
+          "Name":"Swaziland Dev and Savings Bank",
+          "TenantId":"210031",
+          "BranchRangeStart":770000,
+          "BranchRangeEnd":770999
+          },
+          {
+          "Name":"FBC Fidelity Bank",
+          "TenantId":"210027",
+          "BranchRangeStart":780000,
+          "BranchRangeEnd":789999
+          },
+          {
+          "Name":"Unibank Limited",
+          "TenantId":"210028",
+          "BranchRangeStart":790000,
+          "BranchRangeEnd":799999
+          },
+          {
+          "Name":"Albaraka Bank",
+          "TenantId":"210052",
+          "BranchRangeStart":800000,
+          "BranchRangeEnd":800999
+          },
+          {
+          "Name":"State Bank of India",
+          "TenantId":"210053",
+          "BranchRangeStart":801000,
+          "BranchRangeEnd":801999
+          },
+          {
+          "Name":"Bank Zero",
+          "TenantId":"210064",
+          "BranchRangeStart":888000,
+          "BranchRangeEnd":888999
+          },
+          {
+          "Name":"SA Reserve Bank",
+          "TenantId":"210012",
+          "BranchRangeStart":900000,
+          "BranchRangeEnd":999999
+          }
+      ]
+  }
+
+
+}

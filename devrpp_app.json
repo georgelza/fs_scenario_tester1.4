@@ -1,0 +1,22 @@
+{
+    "echoConfig": 1,                        # echo this file to the terminal
+    "debuglevel": 3,                        # 0=no logging, up to 4 ull logging enabled
+    "echojson": 0,                          # Echo output JSON to terminal
+    "EchoSeed": 0,                          # do we want to echo the see data to the console
+    "httpposturl": "https://dev-env.bankservafrica.prod.risk-hub.io:8443/events",
+    "Call_fs_api": 0,
+    "cert_dir": "democerts",                # Directory where we will store the certs
+    "cert_file": "client.crt",
+    "cert_key": "client.key",
+    "datamode": "rpp",                      # rpp or hist, hist implying historical systems, ie eft, rtc or ac collections
+    "json_from_file": 1,                    # if this is 0 then we generate/create fake data using seed file, otherwise we're read the input_path for input files
+    "input_path": "json_dev_rpp_source1",   # Input directory where events/scenario's are stored                  
+    "json_to_file": 1,                      # do we output created event and engineresponse to file system          
+    "output_path": "json_dev_rpp_output1",  # where to write output to
+    "testsize": 1,                          # when we running in generate events from seed data (json_from_file: 1), how many events do we want to create
+    "sleep": 2000,                          # Milliseconds, aka 5000 => 5 seconds. this mean we will sleep between 0 and 5000 between record creates or record posts.
+    "MinTransactionValue": 100,             # Whats the low end of the transaction value to generate, when creating fake events from seed
+    "MaxTransactionValue": 1000,            # Whats the upper limit of the transaction value to generate, when creating fake events from seed
+    "SeedFile": "dev_seed.json"             # File containing seed data.
+}
+

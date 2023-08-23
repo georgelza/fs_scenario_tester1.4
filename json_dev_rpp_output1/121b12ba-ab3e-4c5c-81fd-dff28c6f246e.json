@@ -1,0 +1,70 @@
+{
+ "accountAddress": {
+  "addressLine1": "CTT.debtor.streetName",
+  "addressLine2": "CTT.debtor.buildingNumber and buildingName",
+  "country": "ZAF",
+  "countrySubDivision": "CTT.debtor.countrySubDivision",
+  "fullAddress": "CTT.debtor.addressLine",
+  "postalCode": "5678",
+  "townName": "CTT.debtor.townName"
+ },
+ "accountAgentId": "SBZAZAJJ",
+ "accountAgentName": "Standard Bank of SA",
+ "accountId": "12345210001",
+ "accountName": {
+  "fullName": "debtorAccount",
+  "namePrefix": "CTT",
+  "surname": "Name"
+ },
+ "amount": {
+  "baseCurrency": "zar",
+  "baseValue": 231,
+  "currency": "zar",
+  "value": 230.1
+ },
+ "chargeBearer": "SLEV",
+ "counterpartyAddress": {
+  "addressLine1": "CTT.creditor.streetName",
+  "addressLine2": "CTT.creditor.buildingNumber and buildingName",
+  "country": "ZAF",
+  "countrySubDivision": "CTT.creditor.countrySubDivision",
+  "fullAddress": "CTT.creditor.addressLine",
+  "postalCode": "1234",
+  "townName": "CTT.creditor.townName"
+ },
+ "counterpartyAgentId": "ABSAZAJJ",
+ "counterpartyAgentName": "ABSA Bank Ltd",
+ "counterpartyId": "12345210016",
+ "counterpartyName": {
+  "fullName": "creditorAccount",
+  "namePrefix": "CTT",
+  "surname": "Name"
+ },
+ "creationDate": "2023-08-23T10:18:17",
+ "customerId": "CID12345210001",
+ "destinationCountry": "ZAF",
+ "direction": "outbound",
+ "eventId": "121b12ba-ab3e-4c5c-81fd-dff28c6f246e",
+ "eventTime": "2023-08-23T10:18:17",
+ "eventType": "paymentRT",
+ "fromId": "210001",
+ "localInstrument": "PBAC",
+ "msgStatus": "New",
+ "msgType": "CLRG",
+ "numberOfTransactions": 1,
+ "paymentClearingSystemReference": "",
+ "paymentFrequency": "ADHO",
+ "paymentMethod": "TRF",
+ "paymentReference": "LABRADOR PUPPY",
+ "requestExecutionDate": "2023-08-23",
+ "schemaVersion": 1,
+ "serviceLevelCode": "PBAC",
+ "settlementClearingSystemCode": "",
+ "settlementDate": "2023-08-23",
+ "settlementMethod": "CLRG",
+ "tenantId": "210001",
+ "toId": "210016",
+ "transactionId": "a475569e-0a4a-4919-8623-b6efd40d24c0",
+ "transactionType": "PBAC",
+ "verificationResult": "SUCC"
+}

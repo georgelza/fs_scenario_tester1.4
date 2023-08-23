@@ -19,5 +19,8 @@
 
 # Folders
 bin/
-certs/
+democerts/
+sitcerts/
+distribute/
+old/
 

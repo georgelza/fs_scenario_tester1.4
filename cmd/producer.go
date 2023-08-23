@@ -37,8 +37,10 @@
 *					:				- staggered/split the accounts into Good: [] and Bad: [] as sub sections under Accounts
 *					:				- Added additonal fields as determined through schema workshops to TenantRT message structure
 *					:				- Removed Good and BadEntities
-*
-*
+*					:
+*					: 21 Aug 2023	- Change the fake data generation to be financial transaction based. if RT mode then it will generate a RT and NRT
+*					: (2.0)			- if non RT then it creates 2 x NRT based payments.
+*					:				- Add capability on the file input functionality to read/post AddProxy files.
 *
 *
 *	By				: George Leonard (georgelza@gmail.com)
@@ -54,10 +56,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -82,6 +85,7 @@ var (
 	validate = validator.New()
 	varSeed  types.TPSeed
 	vGeneral types.Tp_general
+	pathSep  = string(os.PathSeparator)
 )
 
 func init() {
@@ -108,20 +112,25 @@ func init() {
 
 func loadConfig(params ...string) types.Tp_general {
 
+	var err error
+
 	vGeneral := types.Tp_general{}
 	env := "dev"
 	if len(params) > 0 {
 		env = params[0]
+		grpcLog.Info("Called with ", env)
+
 	}
 
-	path, err := os.Getwd()
+	vGeneral.CurrentPath, err = os.Getwd()
 	if err != nil {
 		grpcLog.Fatalln("Problem retrieving current path: %s", err)
 
 	}
 
-	//	fileName := fmt.Sprintf("%s/%s_app.json", path, env)
-	fileName := fmt.Sprintf("%s/%s_app.json", path, env)
+	vGeneral.OSName = runtime.GOOS
+
+	fileName := fmt.Sprintf("%s%s%s_app.json", vGeneral.CurrentPath, pathSep, env)
 	err = gonfig.GetConf(fileName, &vGeneral)
 	if err != nil {
 		grpcLog.Fatalln("Error Reading Config File: ", err)
@@ -135,11 +144,11 @@ func loadConfig(params ...string) types.Tp_general {
 		}
 		vGeneral.Hostname = vHostname
 
-		vGeneral.Cert_file = path + "/" + vGeneral.Cert_dir + "/" + vGeneral.Cert_file
-		vGeneral.Cert_key = path + "/" + vGeneral.Cert_dir + "/" + vGeneral.Cert_key
+		vGeneral.Cert_file = fmt.Sprintf("%s%s%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Cert_dir, pathSep, vGeneral.Cert_file)
+		vGeneral.Cert_key = fmt.Sprintf("%s%s%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Cert_dir, pathSep, vGeneral.Cert_key)
 
 		if vGeneral.Json_to_file == 1 {
-			vGeneral.Output_path = path + "/" + vGeneral.Output_path
+			vGeneral.Output_path = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Output_path)
 
 		} else {
 			vGeneral.Output_path = ""
@@ -147,12 +156,15 @@ func loadConfig(params ...string) types.Tp_general {
 		}
 
 		if vGeneral.Json_from_file == 1 {
-			vGeneral.Input_path = path + "/" + vGeneral.Input_path
+			vGeneral.Input_path = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Input_path)
 
 		} else {
 			vGeneral.Input_path = ""
 
 		}
+
+		vGeneral.SeedFile = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.SeedFile)
+
 	}
 
 	if vGeneral.EchoConfig == 1 {
@@ -162,7 +174,7 @@ func loadConfig(params ...string) types.Tp_general {
 	if vGeneral.Debuglevel > 0 {
 		grpcLog.Infoln("*")
 		grpcLog.Infoln("* Config:")
-		grpcLog.Infoln("* Current path:", path)
+		grpcLog.Infoln("* Current path:", vGeneral.CurrentPath)
 		grpcLog.Infoln("* Config File :", fileName)
 		grpcLog.Infoln("*")
 
@@ -171,18 +183,11 @@ func loadConfig(params ...string) types.Tp_general {
 	return vGeneral
 }
 
-func loadSeed(file string) types.TPSeed {
+func loadSeed(fileName string) types.TPSeed {
 
 	var vSeed types.TPSeed
 
-	path, err := os.Getwd()
-	if err != nil {
-		grpcLog.Fatalln("Problem retrieving current path: %s", err)
-
-	}
-
-	fileName := fmt.Sprintf("%s/%s", path, file)
-	err = gonfig.GetConf(fileName, &vSeed)
+	err := gonfig.GetConf(fileName, &vSeed)
 	if err != nil {
 		grpcLog.Fatalln("Error Reading Seed File: ", err)
 
@@ -201,8 +206,8 @@ func loadSeed(file string) types.TPSeed {
 	if vGeneral.Debuglevel > 0 {
 		grpcLog.Infoln("*")
 		grpcLog.Infoln("* Seed :")
-		grpcLog.Infoln("* Current path:", path)
-		grpcLog.Infoln("* Seed File :", fileName)
+		grpcLog.Infoln("* Current path:", vGeneral.CurrentPath)
+		grpcLog.Infoln("* Seed File :", vGeneral.SeedFile)
 		grpcLog.Infoln("*")
 
 	}
@@ -215,24 +220,33 @@ func printConfig(vGeneral types.Tp_general) {
 	grpcLog.Info("****** General Parameters *****")
 	grpcLog.Info("*")
 	grpcLog.Info("* Hostname is\t\t\t", vGeneral.Hostname)
+	grpcLog.Info("* OS is \t\t\t", vGeneral.OSName)
+	grpcLog.Info("*")
 	grpcLog.Info("* Debug Level is\t\t", vGeneral.Debuglevel)
-	grpcLog.Info("* Echo JSON is\t\t", vGeneral.Echojson)
 	grpcLog.Info("*")
 	grpcLog.Info("* Sleep Duration is\t\t", vGeneral.Sleep)
 	grpcLog.Info("* Test Batch Size is\t\t", vGeneral.Testsize)
-	grpcLog.Info("* Call FS API is\t\t", vGeneral.Call_fs_api)
-	grpcLog.Info("* HTTP JSON POST URL is\t", vGeneral.Httpposturl)
+	grpcLog.Info("* Seed File is\t\t\t", vGeneral.SeedFile)
+	grpcLog.Info("* Echo Seed is\t\t", vGeneral.EchoSeed)
+	grpcLog.Info("* Echo JSON is\t\t", vGeneral.Echojson)
+	grpcLog.Info("*")
+
+	grpcLog.Info("* Current Path is \t\t", vGeneral.CurrentPath)
 	grpcLog.Info("* Cert file is\t\t", vGeneral.Cert_file)
 	grpcLog.Info("* Cert key is\t\t\t", vGeneral.Cert_key)
-	grpcLog.Info("* Event Type is\t\t", vGeneral.Eventtype)
+
+	grpcLog.Info("* HTTP JSON POST URL is\t", vGeneral.Httpposturl)
+
+	grpcLog.Info("* Read JSON from file is\t", vGeneral.Json_from_file) // if 0 then we create fake data else
+	grpcLog.Info("* Input path is\t\t", vGeneral.Input_path)            // if 1 then read files from input_path
+	grpcLog.Info("* Data Gen Mode is\t\t", vGeneral.Datamode)           // if we're creating fake data then who's the input system
+
 	grpcLog.Info("* Output JSON to file is\t", vGeneral.Json_to_file)
 	grpcLog.Info("* Output path is\t\t", vGeneral.Output_path)
-	grpcLog.Info("* Read JSON from file is\t", vGeneral.Json_from_file)
-	grpcLog.Info("* Input path is\t\t", vGeneral.Input_path)
+
 	grpcLog.Info("* MinTransactionValue is\tR ", vGeneral.MinTransactionValue)
 	grpcLog.Info("* MaxTransactionValue is\tR ", vGeneral.MaxTransactionValue)
-	grpcLog.Info("* SeedFile is\t\t\t", vGeneral.SeedFile)
-	grpcLog.Info("* EchoSeed is\t\t\t", vGeneral.EchoSeed)
+
 	grpcLog.Info("*")
 	grpcLog.Info("*******************************")
 
@@ -257,6 +271,7 @@ func prettyJSON(ms string) {
 
 }
 
+// We're driving this from an account perspective. so lets find the tenants information as per the account def
 // Helper Func - Find the tenandId for the Bank sending or receiving the funds.
 func findTenant(tenants []types.TTenant, filter string) (ret types.TTenant, err error) {
 
@@ -271,131 +286,43 @@ func findTenant(tenants []types.TTenant, filter string) (ret types.TTenant, err 
 	return ret, err
 }
 
-// paymentNRT payload build
-func contructPaymentNRTFromFake() (t_Payment map[string]interface{}) {
+// - FAKE Data generation
+// - Build a fin transaction.
+// 1. are we doing "hist" or rpp
+// 2. Step 1 select debitor
+// 3. Step 2 find creditor
+// 4. build outbound record
+// 5. build inbound record
+// 6. send
+// 7. print to file
+// 8. print to screen
+
+func constructFinTransaction() (t_OutboundPayment map[string]interface{}, t_InboundPayment map[string]interface{}) {
+
+	var paymentStream string
+	var TransactionTypeNRT string
+	var localInstrument string
+	var jDebtorAccount types.TAccount
+	var jCreditorAccount types.TAccount
+	var jDebtorBank types.TTenant
+	var jCreditorBank types.TTenant
+	var DebtorFIBranchId string
+	var CreditorFIBranchId string
+
+	var txnId string
+	var eventTime string
+	var requestExecutionDate string
+	var settlementDate string
+	var paymentClearingSystemReference string
+	var paymentRef string
+	var remittanceId string
+	var msgType string
 
 	// We just using gofakeit to pad the json document size a bit.
 	//
 	// https://github.com/brianvoe/gofakeit
 	// https://pkg.go.dev/github.com/brianvoe/gofakeit
 
-	gofakeit.Seed(time.Now().UnixNano())
-	gofakeit.Seed(0)
-
-	directionCount := len(varSeed.Direction) - 1
-	direction := varSeed.Direction[gofakeit.Number(0, directionCount)]
-
-	paymentFrequencyCount := len(varSeed.PaymentFrequency) - 1
-	nPaymentFrequency := gofakeit.Number(0, paymentFrequencyCount)
-	paymentFrequency := varSeed.PaymentFrequency[nPaymentFrequency]
-
-	nAmount := gofakeit.Price(vGeneral.MinTransactionValue, vGeneral.MaxTransactionValue)
-	t_amount := &types.TAmount{
-		BaseCurrency: "zar",
-		BaseValue:    nAmount,
-		Currency:     "zar",
-		Value:        nAmount,
-	}
-
-	var jAccount types.TAccount
-	var jCounterParty types.TAccount
-	var jAccountBank types.TTenant
-	var jCounterPartyBank types.TTenant
-	var jTenant types.TTenant
-	var fromFIBranchId string
-	var toFIBranchId string
-	var toId string
-	var fromId string
-
-	// Find the clients, it's all about them...
-	// and build the structure from that viewpoint
-	accountCount := len(varSeed.Accounts.Good) - 1
-	cDebtor := gofakeit.Number(0, accountCount)
-	cCreditor := gofakeit.Number(0, accountCount)
-
-	if direction == "outbound" {
-		jAccount = varSeed.Accounts.Good[cDebtor]
-		jCounterParty = varSeed.Accounts.Good[cCreditor]
-
-		jAccountBank, _ = findTenant(varSeed.Tenants.NRT, jAccount.TenantId)
-		jCounterPartyBank, _ = findTenant(varSeed.Tenants.NRT, jCounterParty.TenantId)
-
-		toFIBranchId = strconv.Itoa(gofakeit.Number(jCounterPartyBank.BranchRangeStart, jCounterPartyBank.BranchRangeEnd))
-		fromFIBranchId = strconv.Itoa(gofakeit.Number(jAccountBank.BranchRangeStart, jAccountBank.BranchRangeEnd))
-
-		toId = jCounterParty.AccountNumber
-		fromId = jAccount.AccountNumber
-
-	} else {
-		jAccount = varSeed.Accounts.Good[cCreditor]
-		jCounterParty = varSeed.Accounts.Good[cDebtor]
-
-		jAccountBank, _ = findTenant(varSeed.Tenants.NRT, jAccount.TenantId)
-		jCounterPartyBank, _ = findTenant(varSeed.Tenants.NRT, jCounterParty.TenantId)
-
-		toFIBranchId = strconv.Itoa(gofakeit.Number(jAccountBank.BranchRangeStart, jAccountBank.BranchRangeEnd))
-		fromFIBranchId = strconv.Itoa(gofakeit.Number(jCounterPartyBank.BranchRangeStart, jCounterPartyBank.BranchRangeEnd))
-
-		toId = jAccount.AccountNumber
-		fromId = jCounterParty.AccountNumber
-
-	}
-
-	// We ust showing 2 ways to construct a JSON document to be Marshalled, this is the first using a map/interface,
-	// followed by using a set of struct objects added together.
-	t_Payment = map[string]interface{}{
-		"accountAgentId":                 jAccountBank.TenantId, // Bank
-		"accountAgentName":               jAccountBank.Name,
-		"accountEntityId":                strconv.Itoa(rand.Intn(6)),
-		"accountId":                      jAccount.TenantId + jAccount.AccountNumber,
-		"amount":                         t_amount,
-		"chargeBearer":                   "SLEV",
-		"counterpartyAgentId":            jCounterPartyBank.TenantId, // Counter bank
-		"counterpartyEntityId":           strconv.Itoa(gofakeit.Number(0, 9999)),
-		"counterpartyId":                 jCounterParty.AccountNumber,
-		"customerEntityId":               "customerEntityId_1",
-		"customerId":                     jAccount.AccountNumber,
-		"creationDate":                   time.Now().Format("2006-01-02T15:04:05"),
-		"destinationCountry":             "ZAF",
-		"direction":                      direction,
-		"eventId":                        uuid.New().String(),
-		"eventTime":                      time.Now().Format("2006-01-02T15:04:05"),
-		"eventType":                      "paymentNRT",
-		"fromFIBranchId":                 fromFIBranchId,
-		"fromId":                         fromId,
-		"localInstrument":                "42",
-		"msgStatus":                      "Success",
-		"msgType":                        "RCCT",
-		"numberOfTransactions":           1,
-		"paymentClearingSystemReference": uuid.New().String(),
-		"paymentFrequency":               paymentFrequency,
-		"paymentMethod":                  "TRF",
-		"paymentReference":               "sdfsfd",
-		"remittanceId":                   "sdfsdsd",
-		"requestExecutionDate":           time.Now().Format("2006-01-02"),
-		"schemaVersion":                  1,
-		"settlementClearingSystemCode":   "RTC",
-		"settlementDate":                 time.Now().Format("2006-01-02"),
-		"settlementMethod":               "CLRG",
-		"tenantId":                       jTenant.TenantId,
-		"toFIBranchId":                   toFIBranchId,
-		"toId":                           toId,
-		"totalAmount":                    t_amount,
-		"transactionId":                  uuid.New().String(),
-	}
-
-	return t_Payment
-}
-
-// paymentRT payload build
-func contructPaymentRTFromFake() (t_Payment map[string]interface{}) {
-
-	// We just using gofakeit to pad the json document size a bit.
-	//
-	// https://github.com/brianvoe/gofakeit
-	// https://pkg.go.dev/github.com/brianvoe/gofakeit
-
-	gofakeit.Seed(time.Now().UnixNano())
 	gofakeit.Seed(0)
 
 	nAmount := gofakeit.Price(vGeneral.MinTransactionValue, vGeneral.MaxTransactionValue)
@@ -406,153 +333,324 @@ func contructPaymentRTFromFake() (t_Payment map[string]interface{}) {
 		Value:        nAmount,
 	}
 
-	directionCount := len(varSeed.Direction) - 1
-	cDirection := gofakeit.Number(0, directionCount)
-	direction := varSeed.Direction[cDirection]
+	// Determine how many accounts we have in seed file, it's all about them...
+	// and build the 2 structures from that viewpoint
+	accountsCount := len(varSeed.Accounts.Good) - 1
+	nDebtorAccount := gofakeit.Number(0, accountsCount)
+	nCreditorAccount := gofakeit.Number(0, accountsCount)
 
-	var jAccount types.TAccount
-	var jCounterParty types.TAccount
-	var jFromBank types.TTenant
-	var jToBank types.TTenant
-	var jTenant types.TTenant
-	var toId string
-	var fromId string
-	var err error
+	// check to make sure the 2 are not the same, if they are, redo...
+	if nDebtorAccount == nCreditorAccount {
+		nCreditorAccount = gofakeit.Number(0, accountsCount)
+	}
 
-	// Find the clients, it's all about them...
-	// and build the structure from that viewpoint
-	accountCount := len(varSeed.Accounts.Good) - 1
-	cDebtor := gofakeit.Number(0, accountCount)
-	cCreditor := gofakeit.Number(0, accountCount)
+	// find the debtor and creditor record to use
+	jDebtorAccount = varSeed.Accounts.Good[nDebtorAccount]
+	jCreditorAccount = varSeed.Accounts.Good[nCreditorAccount]
 
-	if direction == "outbound" {
-		jAccount = varSeed.Accounts.Good[cDebtor]
-		jCounterParty = varSeed.Accounts.Good[cCreditor]
+	if vGeneral.Datamode == "hist" {
+		paymentStreamCount := len(varSeed.PaymentStreamNRT) - 1
+		nPaymentStream := gofakeit.Number(0, paymentStreamCount)
+		paymentStream = varSeed.PaymentStreamNRT[nPaymentStream]
 
-		jFromBank, err = findTenant(varSeed.Tenants.RT, jAccount.TenantId)
-		if err != nil {
-			grpcLog.Fatalf("contructPaymentRTFromFake - %s, %s, %s: ", direction, err.Error(), jAccount.TenantId)
+		if paymentStream == "EFT" {
+			TransactionTypesCount := len(varSeed.TransactionTypeNRT.EFT) - 1
+			nTransactionTypesCount := gofakeit.Number(0, TransactionTypesCount)
+			TransactionTypeNRT = varSeed.TransactionTypeNRT.EFT[nTransactionTypesCount].Name
+			msgType = "EFT"
+
+		} else if paymentStream == "ACD" {
+			TransactionTypesCount := len(varSeed.TransactionTypeNRT.ACD) - 1
+			nTransactionTypesCount := gofakeit.Number(0, TransactionTypesCount)
+			TransactionTypeNRT = varSeed.TransactionTypeNRT.ACD[nTransactionTypesCount].Name
+			msgType = "900000"
+
+		} else if paymentStream == "RTC" {
+			TransactionTypesCount := len(varSeed.TransactionTypeNRT.RTC) - 1
+			nTransactionTypesCount := gofakeit.Number(0, TransactionTypesCount)
+			TransactionTypeNRT = varSeed.TransactionTypeNRT.RTC[nTransactionTypesCount].Name
+			msgType = "RTCCT"
+
 		}
+		jDebtorBank, _ = findTenant(varSeed.Tenants.NRT, jDebtorAccount.TenantId)
+		jCreditorBank, _ = findTenant(varSeed.Tenants.NRT, jCreditorAccount.TenantId)
 
-		jToBank, err = findTenant(varSeed.Tenants.RT, jCounterParty.TenantId)
-		if err != nil {
-			grpcLog.Fatalf("contructPaymentRTFromFake - %s, %s, %s: ", direction, err.Error(), jCounterParty.TenantId)
-		}
+		localInstrumentCount := len(varSeed.LocalInstrument.HIST) - 1
+		nlocalInstrumentCount := gofakeit.Number(0, localInstrumentCount)
+		localInstrument = varSeed.LocalInstrument.HIST[nlocalInstrumentCount].Name
 
-		fromId = jAccount.AccountNumber
-		toId = jCounterParty.AccountNumber
+	} else { // RPP
+		jDebtorBank, _ = findTenant(varSeed.Tenants.RT, jDebtorAccount.TenantId)
+		jCreditorBank, _ = findTenant(varSeed.Tenants.RT, jCreditorAccount.TenantId)
 
-		jTenant = jFromBank
-
-	} else {
-		jAccount = varSeed.Accounts.Good[cCreditor]
-		jCounterParty = varSeed.Accounts.Good[cDebtor]
-
-		jFromBank, err = findTenant(varSeed.Tenants.RT, jCounterParty.TenantId)
-		if err != nil {
-			grpcLog.Fatalf("contructPaymentRTFromFake - %s, %s, %s: ", direction, err.Error(), jCounterParty.TenantId)
-		}
-		jToBank, err = findTenant(varSeed.Tenants.RT, jAccount.TenantId)
-		if err != nil {
-			grpcLog.Fatalf("contructPaymentRTFromFake - %s, %s, %s: ", direction, err.Error(), jAccount.TenantId)
-		}
-		toId = jAccount.AccountNumber
-		fromId = jCounterParty.AccountNumber
-
-		jTenant = jToBank
+		localInstrumentCount := len(varSeed.LocalInstrument.RPP) - 1
+		nlocalInstrumentCount := gofakeit.Number(0, localInstrumentCount)
+		localInstrument = varSeed.LocalInstrument.RPP[nlocalInstrumentCount].Value
 
 	}
 
-	paymentFrequencyCount := len(varSeed.PaymentFrequency) - 1
-	cPaymentFrequencyCount := gofakeit.Number(0, paymentFrequencyCount)
-	jPaymentFrequencyCount := varSeed.PaymentFrequency[cPaymentFrequencyCount]
+	// find FIB Id for the debtor and creditor bank
+	DebtorFIBranchId = strconv.Itoa(gofakeit.Number(jDebtorBank.BranchRangeStart, jDebtorBank.BranchRangeEnd))
+	CreditorFIBranchId = strconv.Itoa(gofakeit.Number(jCreditorBank.BranchRangeStart, jCreditorBank.BranchRangeEnd))
 
-	//remittanceLocationMethodCount := len(varSeed.RemittanceLocationMethod) - 1
-	transactionTypesCount := len(varSeed.TransactionTypesRt) - 1
-	nTransactionTypesRt := gofakeit.Number(3, transactionTypesCount) // 3 onwards is RT types
-	transactionTypes := varSeed.TransactionTypesRt[nTransactionTypesRt]
+	txnId = uuid.New().String()
+	eventTime = time.Now().Format("2006-01-02T15:04:05")
 
-	chargeBearersCount := len(varSeed.ChargeBearers) - 1
-	nChargeBearers := gofakeit.Number(0, chargeBearersCount)
-	chargeBearers := varSeed.ChargeBearers[nChargeBearers]
+	requestExecutionDate = time.Now().Format("2006-01-02")
+	settlementDate = time.Now().Format("2006-01-02")
+	paymentClearingSystemReference = uuid.New().String()
+	paymentRef = paymentClearingSystemReference
+	remittanceId = paymentClearingSystemReference
 
-	settlementMethodCount := len(varSeed.SettlementMethod) - 1
-	nSettlementMethod := gofakeit.Number(0, settlementMethodCount)
+	if vGeneral.Datamode == "hist" {
 
-	t_Payment = map[string]interface{}{
-		"accountAgentId":   jFromBank.Bicfi,                             // Bank Bicfi
-		"accountAgentName": jFromBank.Name,                              // Bank Name
-		"accountId":        jAccount.AccountNumber,                      // Bank Acc Number
-		"accountEntityId":  jFromBank.TenantId + jAccount.AccountNumber, // tenantid + account number
-		"accountAddress": types.TAddress{ // Payer - Payee
-			AddressLine1:       jAccount.Address.AddressLine1, // CTT.creditor.streetName
-			AddressLine2:       jAccount.Address.AddressLine2, // CTT.creditor.buildingNumber and buildingName
-			TownName:           jAccount.Address.TownName,
-			CountrySubDivision: jAccount.Address.CountrySubDivision,
-			Country:            jAccount.Address.Country,
-			PostalCode:         jAccount.Address.PostalCode,
-			FullAddress:        jAccount.Address.FullAddress,
-		},
-		"accountName": types.TName{
-			FullName:   jAccount.Name.FullName, // CTT.Creditor or CTT.Debtor
-			NamePrefix: jAccount.Name.NamePrefix,
-			Surname:    jAccount.Name.Surname,
-		},
-		"amount":       t_amount,
-		"chargeBearer": chargeBearers,
-		"counterpartyAddress": types.TAddress{ // Payer - Payee
-			AddressLine1:       jCounterParty.Address.AddressLine1, // CTT.creditor.streetName
-			AddressLine2:       jCounterParty.Address.AddressLine2, // CTT.creditor.buildingNumber and buildingName
-			TownName:           jCounterParty.Address.TownName,
-			CountrySubDivision: jCounterParty.Address.CountrySubDivision,
-			Country:            jCounterParty.Address.Country,
-			PostalCode:         jCounterParty.Address.PostalCode,
-			FullAddress:        jCounterParty.Address.FullAddress,
-		},
-		"counterpartyAgentId":   jToBank.Bicfi, // Counterparty Bank
-		"counterpartyAgentName": jToBank.Name,
-		"counterpartyId":        jCounterParty.AccountNumber,
-		"counterpartyName": types.TName{
-			FullName:   jCounterParty.Name.FullName, // CTT.Creditor or CTT.Debtor
-			NamePrefix: jCounterParty.Name.NamePrefix,
-			Surname:    jCounterParty.Name.Surname,
-		},
-		"creationDate":                   time.Now().Format("2006-01-02T15:04:05"),
-		"customerId":                     jAccount.AccountNumber,
-		"destinationCountry":             "ZAF",
-		"direction":                      direction,
-		"eventId":                        uuid.New().String(),
-		"eventTime":                      time.Now().Format("2006-01-02T15:04:05"),
-		"eventType":                      "paymentRT",
-		"fromId":                         fromId,
-		"localInstrument":                "PBAC", // Hard Coded, Pay By Account =>
-		"msgStatus":                      "New",
-		"msgType":                        "RPP",
-		"numberOfTransactions":           1,
-		"paymentClearingSystemReference": "",
-		"paymentFrequency":               jPaymentFrequencyCount,
-		"paymentMethod":                  "TRF", // Hard coded CHK Cheque / TRF Transfer
-		"paymentReference":               "",
-		"requestExecutionDate":           time.Now().Format("2006-01-02"),
-		"schemaVersion":                  1,
-		"serviceLevelCode":               "PBAC",
-		"settlementClearingSystemCode":   "",
-		"settlementDate":                 time.Now().Format("2006-01-02"),
-		"settlementMethod":               varSeed.SettlementMethod[nSettlementMethod],
-		"tenantId":                       jTenant.TenantId,
-		"toId":                           toId,
-		"transactionId":                  uuid.New().String(),
-		"transactionType":                transactionTypes,
-		"verificationResult":             "SUCC",
+		// 2 x NRT records/events
+
+		t_OutboundPayment = map[string]interface{}{
+			"accountAgentId":                 jDebtorBank.TenantId,
+			"accountId":                      jDebtorAccount.AccountNumber,
+			"accountIdCode":                  jDebtorAccount.AccountIDCode, // Type of Account
+			"accountNumber":                  jDebtorAccount.AccountNumber,
+			"amount":                         t_amount,
+			"chargeBearer":                   "SLEV",
+			"counterpartyAgentId":            jCreditorBank.TenantId,
+			"counterpartyId":                 jCreditorAccount.AccountNumber,
+			"counterpartyIdCode":             jCreditorAccount.AccountIDCode, // Type of Account
+			"counterpartyNumber":             jCreditorAccount.AccountNumber,
+			"creationDate":                   time.Now().Format("2006-01-02T15:04:05"),
+			"destinationCountry":             "ZAF",
+			"direction":                      "outbound",
+			"eventId":                        uuid.New().String(),
+			"eventTime":                      eventTime,
+			"eventType":                      "paymentNRT",
+			"fromFIBranchId":                 DebtorFIBranchId,
+			"fromId":                         jDebtorBank.TenantId,
+			"localInstrument":                localInstrument, // aka Record ID's
+			"msgStatus":                      "Settlement",
+			"msgType":                        msgType,
+			"msgStatusReason":                "JNL_ACQ.responseCode",
+			"numberOfTransactions":           1,
+			"paymentClearingSystemReference": paymentClearingSystemReference,
+			"paymentMethod":                  "TRF",
+			"paymentReference":               paymentRef,
+			"remittanceId":                   remittanceId,
+			"requestExecutionDate":           requestExecutionDate,
+			"schemaVersion":                  1,
+			"settlementClearingSystemCode":   paymentStream,
+			"settlementDate":                 settlementDate,
+			"settlementMethod":               "CLRG",
+			"tenantId":                       jDebtorAccount.TenantId,
+			"toFIBranchId":                   CreditorFIBranchId,
+			"toId":                           jCreditorBank.TenantId,
+			"totalAmount":                    t_amount,
+			"transactionId":                  txnId,
+			"transactionType":                TransactionTypeNRT,
+			"verificationResult":             "SUCC",
+			"usercode":                       "0000",
+		}
+
+		t_InboundPayment = map[string]interface{}{
+			"accountAgentId":                 jCreditorBank.TenantId,
+			"accountId":                      jCreditorAccount.AccountNumber,
+			"accountIdCode":                  jCreditorAccount.AccountIDCode, // Type of Account
+			"accountNumber":                  jCreditorAccount.AccountNumber,
+			"amount":                         t_amount,
+			"chargeBearer":                   "SLEV",
+			"counterpartyAgentId":            jDebtorBank.TenantId,
+			"counterpartyId":                 jDebtorAccount.AccountNumber,
+			"counterpartyIdCode":             jDebtorAccount.AccountIDCode, // Type of Account
+			"counterpartyNumber":             jDebtorAccount.AccountNumber,
+			"creationDate":                   time.Now().Format("2006-01-02T15:04:05"),
+			"destinationCountry":             "ZAF",
+			"direction":                      "inbound",
+			"eventId":                        uuid.New().String(),
+			"eventTime":                      eventTime,
+			"eventType":                      "paymentNRT",
+			"fromFIBranchId":                 DebtorFIBranchId,
+			"fromId":                         jDebtorBank.TenantId,
+			"localInstrument":                localInstrument, // aka Record ID's
+			"msgStatus":                      "Settlement",
+			"msgType":                        msgType,
+			"msgStatusReason":                "JNL_ACQ.responseCode",
+			"numberOfTransactions":           1,
+			"paymentClearingSystemReference": paymentClearingSystemReference,
+			"paymentMethod":                  "TRF",
+			"paymentReference":               paymentRef,
+			"remittanceId":                   remittanceId,
+			"requestExecutionDate":           requestExecutionDate,
+			"schemaVersion":                  1,
+			"settlementClearingSystemCode":   paymentStream,
+			"settlementDate":                 settlementDate,
+			"settlementMethod":               "CLRG",
+			"tenantId":                       jCreditorBank.TenantId,
+			"toFIBranchId":                   CreditorFIBranchId,
+			"toId":                           jCreditorBank.TenantId,
+			"totalAmount":                    t_amount,
+			"transactionId":                  txnId,
+			"transactionType":                TransactionTypeNRT,
+			"verificationResult":             "SUCC",
+			"usercode":                       "0000",
+		}
+
+	} else { // RPP
+		// 1 NRT and 1 RT record/event
+
+		// Outbound => paymentNRT
+		// Inbound => paymentRT
+
+		// Account => Debtor
+		// CounterParty => Creditor
+
+		t_OutboundPayment = map[string]interface{}{
+			"accountAgentId":                    jDebtorBank.TenantId,
+			"accountId":                         jDebtorAccount.AccountNumber,
+			"accountIdCode":                     jDebtorAccount.AccountIDCode, // Type of Account
+			"accountNumber":                     jDebtorAccount.AccountNumber,
+			"amount":                            t_amount,
+			"chargeBearer":                      "SLEV",
+			"counterpartyAgentId":               jCreditorBank.TenantId,
+			"counterpartyId":                    jCreditorAccount.AccountNumber,
+			"counterpartyIdCode":                jCreditorAccount.AccountIDCode, // Type of Account
+			"counterpartyNumber":                jCreditorAccount.AccountNumber,
+			"creationDate":                      time.Now().Format("2006-01-02T15:04:05"),
+			"destinationCountry":                "ZAF",
+			"direction":                         "outbound",
+			"eventId":                           uuid.New().String(),
+			"eventTime":                         eventTime,
+			"eventType":                         "paymentNRT",
+			"fromFIBranchId":                    DebtorFIBranchId,
+			"fromId":                            jDebtorBank.TenantId,
+			"localInstrument":                   localInstrument, // Record ID's
+			"msgStatus":                         "New",
+			"msgType":                           "CRTRF",
+			"msgStatusReason":                   "JNL_ACQ.responseCode",
+			"numberOfTransactions":              1,
+			"paymentClearingSystemReference":    paymentClearingSystemReference,
+			"paymentMethod":                     "TRF",
+			"paymentReference":                  paymentRef,
+			"remittanceId":                      remittanceId,
+			"requestExecutionDate":              requestExecutionDate,
+			"schemaVersion":                     1,
+			"settlementClearingSystemCode":      "RPP",
+			"settlementDate":                    settlementDate,
+			"settlementMethod":                  "CLRG",
+			"tenantId":                          jDebtorAccount.TenantId,
+			"toFIBranchId":                      CreditorFIBranchId,
+			"toId":                              jCreditorBank.TenantId,
+			"totalAmount":                       t_amount,
+			"transactionId":                     txnId,
+			"transactionType":                   "MTUP",
+			"verificationResult":                "SUCC",
+			"instructedAgentId":                 jDebtorBank.Bicfi,
+			"instructingAgentId":                jCreditorBank.Bicfi,
+			"intermediaryAgent1Id":              jDebtorBank.Bicfi,
+			"intermediaryAgent2Id":              jCreditorBank.Bicfi,
+			"ultimateAccountName":               jCreditorAccount.Name,
+			"ultimateCounterpartyName":          jDebtorAccount.Name,
+			"unstructuredRemittanceInformation": paymentClearingSystemReference,
+		}
+
+		// Account => Creditor
+		// CounterParty => Debtor
+
+		chargeBearersCount := len(varSeed.ChargeBearers) - 1
+		nChargeBearers := gofakeit.Number(0, chargeBearersCount)
+		chargeBearers := varSeed.ChargeBearers[nChargeBearers]
+
+		//settlementMethodCount := len(varSeed.SettlementMethod) - 1
+		//nSettlementMethod := gofakeit.Number(0, settlementMethodCount)
+
+		t_InboundPayment = map[string]interface{}{
+			"accountAgentId":    jCreditorBank.Bicfi,            // Bank Bicfi
+			"accountId":         jCreditorAccount.AccountNumber, // Bank Acc Number
+			"accountIdCode":     jCreditorAccount.AccountIDCode,
+			"accountNumber":     jCreditorAccount.AccountNumber,
+			"accountBICFI":      jCreditorBank.Bicfi,
+			"accountProxyId":    jCreditorAccount.ProxyId,
+			"accountProxyType":  jCreditorAccount.ProxyType,
+			"accountDomain":     jCreditorAccount.ProxyDomain,
+			"accountCustomerId": jCreditorAccount.AccountNumber,
+			"accountAddress": types.TAddress{ // Payer - Payee Account
+				AddressLine1:       jCreditorAccount.Address.AddressLine1, // CTT.creditor.streetName
+				AddressLine2:       jCreditorAccount.Address.AddressLine2, // CTT.creditor.buildingNumber and buildingName
+				TownName:           jCreditorAccount.Address.TownName,
+				CountrySubDivision: jCreditorAccount.Address.CountrySubDivision,
+				Country:            jCreditorAccount.Address.Country,
+				PostalCode:         jCreditorAccount.Address.PostalCode,
+				FullAddress:        jCreditorAccount.Address.FullAddress,
+			},
+			"accountName": types.TName{
+				FullName:   jCreditorAccount.Name.FullName, // CTT.Creditor or CTT.Debtor
+				NamePrefix: jCreditorAccount.Name.NamePrefix,
+				Surname:    jCreditorAccount.Name.Surname,
+			},
+			"amount":                 t_amount,
+			"chargeBearer":           chargeBearers,
+			"counterpartyAgentId":    jDebtorBank.Bicfi, // Counterparty Bank
+			"counterpartyId":         jDebtorAccount.AccountNumber,
+			"counterpartyIdCode":     jDebtorAccount.AccountIDCode,
+			"counterpartyNumber":     jDebtorAccount.AccountNumber,
+			"counterpartyBICFI":      jDebtorBank.Bicfi,
+			"counterpartyProxyId":    jDebtorAccount.ProxyId,
+			"counterpartyProxyType":  jDebtorAccount.ProxyType,
+			"counterpartyDomain":     jDebtorAccount.ProxyDomain,
+			"counterpartyCustomerId": jDebtorAccount.AccountNumber,
+			"counterpartyAddress": types.TAddress{ // Payer - Payee
+				AddressLine1:       jDebtorAccount.Address.AddressLine1, // CTT.creditor.streetName
+				AddressLine2:       jDebtorAccount.Address.AddressLine2, // CTT.creditor.buildingNumber and buildingName
+				TownName:           jDebtorAccount.Address.TownName,
+				CountrySubDivision: jDebtorAccount.Address.CountrySubDivision,
+				Country:            jDebtorAccount.Address.Country,
+				PostalCode:         jDebtorAccount.Address.PostalCode,
+				FullAddress:        jDebtorAccount.Address.FullAddress,
+			},
+			"counterpartyName": types.TName{
+				FullName:   jDebtorAccount.Name.FullName, // CTT.Creditor or CTT.Debtor
+				NamePrefix: jDebtorAccount.Name.NamePrefix,
+				Surname:    jDebtorAccount.Name.Surname,
+			},
+			"creationDate":                      time.Now().Format("2006-01-02T15:04:05"),
+			"customerId":                        jCreditorAccount.AccountNumber,
+			"destinationCountry":                "ZAF",
+			"direction":                         "inbound",
+			"eventId":                           uuid.New().String(),
+			"eventTime":                         eventTime,
+			"eventType":                         "paymentRT",
+			"fromId":                            jDebtorBank.TenantId,
+			"localInstrument":                   localInstrument, // pick by LocalInstrumentRt, if pay buy proxy then no creditor account number
+			"msgStatus":                         "New",
+			"msgType":                           "CRTRF",
+			"numberOfTransactions":              1,
+			"paymentClearingSystemReference":    paymentClearingSystemReference,
+			"paymentMethod":                     "TRF", // Hard coded CHK Cheque / TRF Transfer
+			"paymentReference":                  paymentRef,
+			"requestExecutionDate":              requestExecutionDate,
+			"schemaVersion":                     1,
+			"settlementClearingSystemCode":      "RPP",
+			"settlementDate":                    settlementDate,
+			"settlementMethod":                  "CLRG", // hard coded for now... -> varSeed.SettlementMethod[nSettlementMethod],
+			"tenantId":                          jCreditorBank.TenantId,
+			"toId":                              jCreditorBank.TenantId,
+			"transactionId":                     txnId,
+			"transactionType":                   "MTUP",
+			"verificationResult":                "SUCC",
+			"instructedAgentId":                 jDebtorBank.Bicfi,
+			"instructingAgentId":                jCreditorBank.Bicfi,
+			"intermediaryAgent1Id":              jDebtorBank.Bicfi,
+			"intermediaryAgent2Id":              jCreditorBank.Bicfi,
+			"ultimateAccountName":               jCreditorAccount.Name,
+			"ultimateCounterpartyName":          jDebtorAccount.Name,
+			"unstructuredRemittanceInformation": paymentClearingSystemReference,
+		}
 	}
 
-	return t_Payment
+	return t_OutboundPayment, t_InboundPayment
 }
 
 func ReadJSONFile(varRec string) []byte {
 
 	// Let's first read the `config.json` file
-	content, err := ioutil.ReadFile(varRec)
+	content, err := os.ReadFile(varRec)
 	if err != nil {
 		grpcLog.Fatalln("Error when opening file: ", err)
 
@@ -576,41 +674,17 @@ func isJSON(content []byte) (isJson bool) {
 	return isJson
 }
 
-func contructPaymentFromJSON(varRec string) (t_Payment map[string]interface{}) {
+func contructEventFromJSONFile(varRec string) (t_Payload map[string]interface{}) {
 
 	content := ReadJSONFile(varRec)
 
-	err := json.Unmarshal(content, &t_Payment)
+	err := json.Unmarshal(content, &t_Payload)
 	if err != nil {
 		grpcLog.Errorln("Unmarshall error ", err)
 
 	}
 
-	return t_Payment
-}
-
-// Query database and get the record set to work with - For now we're mimicing a fake EFT query/fetch
-func fetchRecords() {
-
-	if vGeneral.Debuglevel > 1 {
-		grpcLog.Info("**** Quering Backend database ****")
-
-	}
-
-	// Execute a large sql #1 execute
-	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(10000) // if vGeneral.sleep = 10000, 10 second
-	if vGeneral.Debuglevel > 1 {
-		grpcLog.Info("EFT SQL Sleeping Millisecond - Simulating long database fetch...", n)
-
-	}
-
-	//	time.Sleep(time.Duration(n) * time.Millisecond)
-
-	if vGeneral.Debuglevel > 1 {
-		grpcLog.Info("**** Backend dataset retrieved ****")
-
-	}
+	return t_Payload
 }
 
 // Return list of files located in input_path to be repackaged as JSON payloads and posted onto the API endpoint
@@ -621,8 +695,8 @@ func fetchJSONRecords(input_path string) (records map[int]string, count int) {
 	m := make(map[int]string)
 
 	// https://yourbasic.org/golang/list-files-in-directory/
-	// Use the ioutil.ReadDir function in package io/ioutil. It returns a sorted slice containing elements of type os.FileInfo.
-	files, err := ioutil.ReadDir(input_path)
+	// Use the os.ReadDir function in package os. It returns a sorted slice containing elements of type os.FileInfo.
+	files, err := os.ReadDir(input_path)
 	if err != nil {
 		grpcLog.Errorln("Problem retrieving list of input files: %s", err)
 	}
@@ -640,10 +714,12 @@ func fetchJSONRecords(input_path string) (records map[int]string, count int) {
 	return records, count
 }
 
-func runLoader() {
+func runLoader(arg string) {
+
+	fmt.Println(arg)
 
 	// Initialize the vGeneral struct variable - This holds our configuration settings.
-	vGeneral = loadConfig("dev")
+	vGeneral = loadConfig(arg)
 
 	// Lets get Seed Data from the specified seed file
 	varSeed = loadSeed(vGeneral.SeedFile)
@@ -651,16 +727,20 @@ func runLoader() {
 	// Create client with Cert once
 	// https://stackoverflow.com/questions/38822764/how-to-send-a-https-request-with-a-certificate-golang
 
-	caCert, err := ioutil.ReadFile(vGeneral.Cert_file)
+	caCert, err := os.ReadFile(vGeneral.Cert_file)
 	if err != nil {
-		grpcLog.Errorln("Problem reading :", vGeneral.Cert_file, " Error :", err)
+		grpcLog.Fatalln("Problem reading (Exiting) :", vGeneral.Cert_file, " Error :", err)
 
 	}
 
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	cert, _ := tls.LoadX509KeyPair(vGeneral.Cert_file, vGeneral.Cert_key)
+	cert, err := tls.LoadX509KeyPair(vGeneral.Cert_file, vGeneral.Cert_key)
+	if err != nil {
+		grpcLog.Fatalln("Problem with LoadX509KeyPair (Exiting) :", vGeneral.Cert_key, " Error :", err)
+		os.Exit(1)
+	}
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -684,10 +764,7 @@ func runLoader() {
 	var returnedRecs map[int]string
 	if vGeneral.Json_from_file == 0 { // Build Fake Record - atm we're generating the data, eventually we might fetch via SQL
 
-		// False SQL fetch / sleep
-		fetchRecords()
-
-		// As we're still faking it:
+		// As we're faking it:
 		todo_count = vGeneral.Testsize // this will be recplaced by the value of todo_count from above.
 
 	} else { // Build Record set from data fetched from JSON files in input_path
@@ -706,7 +783,7 @@ func runLoader() {
 
 			// Build the entire JSON Payload document, either a fake record or from a input/scenario JSON file
 
-			filename := vGeneral.Input_path + "/" + returnedRecs[count]
+			filename := fmt.Sprintf("%s%s%s", vGeneral.Input_path, pathSep, returnedRecs[count])
 
 			contents := ReadJSONFile(filename)
 			if !isJSON(contents) {
@@ -719,6 +796,7 @@ func runLoader() {
 			}
 
 		}
+		// We're saying we want to use records from input files but not all the files are valid JSON, die die die... ;)
 		if weFailed {
 			os.Exit(1)
 		}
@@ -741,147 +819,329 @@ func runLoader() {
 
 		if vGeneral.Debuglevel > 1 {
 			grpcLog.Infoln("")
-			grpcLog.Infoln("Record                :", count+1)
+			grpcLog.Infoln("Record                        :", count+1)
 
 		}
 
 		// We're going to time every record and push that to prometheus
 		txnStart := time.Now()
 
+		// We creating fake data so we will have 2 events to deal with
+		var t_OutboundPayload map[string]interface{}
+		var t_InboundPayload map[string]interface{}
+		var OutboundBytes []byte
+		var InboundBytes []byte
+		var Outboundbody []byte
+		var tOutboundBody map[string]interface{}
+		var Inboundbody []byte
+		var tInboundBody map[string]interface{}
+
+		// We're reading data from file so it's 1 event per loop
 		var t_Payload map[string]interface{}
+		var valueBytes []byte
+		var body []byte
+		var tBody map[string]interface{}
 
 		// Build the entire JSON Payload document, either a fake record or from a input/scenario JSON file
 		if vGeneral.Json_from_file == 0 { // Build Fake Record
 
-			if vGeneral.Eventtype == "paymentNRT" {
-				// They are just to different to have kept in one function, so split them into 2 seperate specific use case functions.
-				t_Payload = contructPaymentNRTFromFake()
+			// They are just to different to have kept in one function, so split them into 2 seperate specific use case functions.
+			t_OutboundPayload, t_InboundPayload = constructFinTransaction()
 
-			} else if vGeneral.Eventtype == "paymentRT" {
-				t_Payload = contructPaymentRTFromFake()
+			OutboundBytes, err := json.Marshal(t_OutboundPayload)
+			if err != nil {
+				grpcLog.Errorln("Marchalling error: ", err)
 
+			}
+
+			InboundBytes, err := json.Marshal(t_InboundPayload)
+			if err != nil {
+				grpcLog.Errorln("Marchalling error: ", err)
+
+			}
+
+			if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
+				grpcLog.Infoln("Outbound Payload   	:")
+				prettyJSON(string(OutboundBytes))
+
+				grpcLog.Infoln("")
+
+				grpcLog.Infoln("Inbound Payload   	:")
+				prettyJSON(string(InboundBytes))
 			}
 
 		} else {
+			// We're reading data from files, so simply post data per file/payload
+
 			// returnedRecs is a map of file names, each filename is JSON document which contains a FS Payment event,
 			// At this point we simply post the contents of the payment onto the end point, and record the response.
-			filename := vGeneral.Input_path + "/" + returnedRecs[count]
+
+			filename := fmt.Sprintf("%s%s%s", vGeneral.Input_path, pathSep, returnedRecs[count])
+
 			if vGeneral.Debuglevel > 2 {
-				grpcLog.Infoln("Source Event          :", filename)
+				grpcLog.Infoln("Source Event                  :", filename)
 
 			}
-			t_Payload = contructPaymentFromJSON(filename)
+			t_Payload = contructEventFromJSONFile(filename)
 
 			// we update/refresh the eventID & eventTime, to ensure we don't get duplicate (and make it a payment in) id's at POST time
 			t_Payload["eventId"] = uuid.New().String()
 			t_Payload["eventTime"] = time.Now().Format("2006-01-02T15:04:05")
-			if vGeneral.Debuglevel > 1 {
-				grpcLog.Infoln("eventId assigned      :", t_Payload["eventId"])
-				grpcLog.Infoln("eventTime assigned    :", t_Payload["eventTime"])
+			t_Payload["transactionId"] = uuid.New().String()
+			t_Payload["creationDate"] = time.Now().Format("2006-01-02T15:04:05")
+
+			if t_Payload["eventType"] == "paymentRT" || t_Payload["eventType"] == "paymentNRT" {
+				t_Payload["requestExecutionDate"] = time.Now().Format("2006-01-02")
+				t_Payload["settlementDate"] = time.Now().Format("2006-01-02")
 
 			}
+
+			if vGeneral.Debuglevel > 1 {
+				grpcLog.Infoln("transactionId assigned        :", t_Payload["transactionId"])
+				grpcLog.Infoln("eventId assigned              :", t_Payload["eventId"])
+				grpcLog.Infoln("eventTime assigned            :", t_Payload["eventTime"])
+				grpcLog.Infoln("creationDate assigned         :", t_Payload["creationDate"])
+
+				if t_Payload["eventType"] == "paymentRT" || t_Payload["eventType"] == "paymentNRT" {
+					grpcLog.Infoln("requestExecutionDate assigned :", t_Payload["requestExecutionDate"])
+					grpcLog.Infoln("settlementDate assigned       :", t_Payload["settlementDate"])
+
+				}
+			}
+			// check to see if we're calling API, if yes then make the call
+
+			valueBytes, err := json.Marshal(t_Payload)
+			if err != nil {
+				grpcLog.Errorln("Marchalling error: ", err)
+
+			}
+			if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
+				grpcLog.Infoln("Output Payload   	:")
+				prettyJSON(string(valueBytes))
+			}
 		}
-
-		valueBytes, err := json.Marshal(t_Payload)
-		if err != nil {
-			grpcLog.Errorln("Marchalling error: ", err)
-
-		}
-
-		if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
-			grpcLog.Infoln("Output Payload   	:")
-			prettyJSON(string(valueBytes))
-		}
-
-		var body []byte
-		var tBody map[string]interface{}
 
 		if vGeneral.Call_fs_api == 1 { // POST to API endpoint
 
-			// Demo environment only available:
-			// 07:00 to 19:00
-			apiStart := time.Now()
+			if vGeneral.Json_from_file == 0 { // We're creating Fake Data
+				// We need to do 2 api calls, 1 each for outbound and inbound event.
 
-			// https://golangtutorial.dev/tips/http-post-json-go/
-			request, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(valueBytes))
-			if err != nil {
-				grpcLog.Errorln("http.NewRequest error: ", err)
+				// Outbound
 
-			}
+				apiOutboundStart := time.Now()
 
-			request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+				// https://golangtutorial.dev/tips/http-post-json-go/
+				OutboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(OutboundBytes))
+				if err != nil {
+					grpcLog.Errorln("http.NewRequest error: ", err)
 
-			response, err := client.Do(request)
-			if err != nil {
-				grpcLog.Errorln("client.Do error: ", err)
+				}
 
-			}
-			defer response.Body.Close()
+				OutboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
-			// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
-			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("API Call Time         :", time.Since(apiStart).Seconds(), "Sec")
+				OutboundResponse, err := client.Do(OutboundRequest)
+				if err != nil {
+					grpcLog.Errorln("client.Do error: ", err)
 
-			}
+				}
+				defer OutboundResponse.Body.Close()
 
-			body, _ = ioutil.ReadAll(response.Body)
-			if vGeneral.Debuglevel > 2 {
-				grpcLog.Infoln("response Payload      :")
-				grpcLog.Infoln("response Status       :", response.Status)
-				grpcLog.Infoln("response Headers      :", response.Header)
+				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("API Call Time         :", time.Since(apiOutboundStart).Seconds(), "Sec")
 
-				if response.Status == "200 OK" {
-					// it's a paymentNT - SUCCESS
-					// it's a paymentRT and we have a very big body
+				}
 
-					json.Unmarshal(body, &tBody)
-					if vGeneral.Echojson == 1 {
-						grpcLog.Infoln("response Body        :")
-						prettyJSON(string(body))
+				Outboundbody, _ = io.ReadAll(OutboundResponse.Body)
+				if vGeneral.Debuglevel > 2 {
+					grpcLog.Infoln("response Payload      :")
+					grpcLog.Infoln("response Status       :", OutboundResponse.Status)
+					grpcLog.Infoln("response Headers      :", OutboundResponse.Header)
+
+					if OutboundResponse.Status == "204 No Content" {
+						// it's a paymentNRT - SUCCESS
+						// lets build a body of the header and some additional information
+
+						grpcLog.Infoln("response Body         : paymentNRT")
+						tOutboundBody = map[string]interface{}{
+							"transactionId":   t_OutboundPayload["transactionId"],
+							"eventId":         t_OutboundPayload["eventId"],
+							"eventType":       t_OutboundPayload["eventType"],
+							"responseStatus":  OutboundResponse.Status,
+							"responseHeaders": OutboundResponse.Header,
+							"processTime":     time.Now().UTC(),
+						}
 
 					} else {
-						grpcLog.Infoln("response Body         : JSON Printing Disabled!")
+						// oh sh$t, its not a success so now to try and build a body to fault fix later
 
+						grpcLog.Infoln("response Body         :", string(Outboundbody))
+						grpcLog.Infoln("response Result       : FAILED POST")
+						tOutboundBody = map[string]interface{}{
+							"transactionId":   t_OutboundPayload["transactionId"],
+							"eventId":         t_OutboundPayload["eventId"],
+							"eventType":       t_OutboundPayload["eventType"],
+							"responseResult":  "FAILED POST",
+							"responseBody":    string(Outboundbody),
+							"responseStatus":  OutboundResponse.Status,
+							"responseHeaders": OutboundResponse.Header,
+							"processTime":     time.Now().UTC(),
+						}
 					}
 
-				} else if response.Status == "204 No Content" {
-					// it's a paymentNRT - SUCCESS
-					// lets build a body of the header and some additional information
+				}
 
-					grpcLog.Infoln("response Body         : paymentNRT")
-					tBody = map[string]interface{}{
-						"eventId":         t_Payload["eventId"],
-						"eventType":       t_Payload["eventType"],
-						"responseStatus":  response.Status,
-						"responseHeaders": response.Header,
-						"processTime":     time.Now().UTC(),
+				// Inbound
+				apiInboundStart := time.Now()
+
+				// https://golangtutorial.dev/tips/http-post-json-go/
+				InboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(InboundBytes))
+				if err != nil {
+					grpcLog.Errorln("http.NewRequest error: ", err)
+
+				}
+
+				InboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+				InboundResponse, err := client.Do(InboundRequest)
+				if err != nil {
+					grpcLog.Errorln("client.Do error: ", err)
+
+				}
+				defer InboundResponse.Body.Close()
+
+				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("API Call Time         :", time.Since(apiInboundStart).Seconds(), "Sec")
+
+				}
+
+				Inboundbody, _ = io.ReadAll(InboundResponse.Body)
+				if vGeneral.Debuglevel > 2 {
+					grpcLog.Infoln("response Payload      :")
+					grpcLog.Infoln("response Status       :", InboundResponse.Status)
+					grpcLog.Infoln("response Headers      :", InboundResponse.Header)
+
+					if InboundResponse.Status == "200 OK" {
+						// it's a paymentNRT - SUCCESS
+						// lets build a body of the header and some additional information
+
+						grpcLog.Infoln("response Body         : paymentRT")
+						tInboundBody = map[string]interface{}{
+							"transactionId":   t_InboundPayload["transactionId"],
+							"eventId":         t_InboundPayload["eventId"],
+							"eventType":       t_InboundPayload["eventType"],
+							"responseStatus":  InboundResponse.Status,
+							"responseHeaders": InboundResponse.Header,
+							"processTime":     time.Now().UTC(),
+						}
+
+					} else {
+						// oh sh$t, its not a success so now to try and build a body to fault fix later
+
+						grpcLog.Infoln("response Body         :", string(Inboundbody))
+						grpcLog.Infoln("response Result       : FAILED POST")
+						tInboundBody = map[string]interface{}{
+							"transactionId":   t_InboundPayload["transactionId"],
+							"eventId":         t_InboundPayload["eventId"],
+							"eventType":       t_InboundPayload["eventType"],
+							"responseResult":  "FAILED POST",
+							"responseBody":    string(Inboundbody),
+							"responseStatus":  InboundResponse.Status,
+							"responseHeaders": InboundResponse.Header,
+							"processTime":     time.Now().UTC(),
+						}
 					}
 
-				} else {
-					// oh sh$t, its not a success so now to try and build a body to fault fix later
+				}
 
-					grpcLog.Infoln("response Body        :", string(body))
+			} else { // We're Reading data from file, so thats one call below for one file from above, loop iteration
 
-					grpcLog.Infoln("response Result         : FAILED POST")
-					tBody = map[string]interface{}{
-						"eventId":         t_Payload["eventId"],
-						"eventType":       t_Payload["eventType"],
-						"responseResult":  "FAILED POST",
-						"responseBody":    string(body),
-						"responseStatus":  response.Status,
-						"responseHeaders": response.Header,
-						"processTime":     time.Now().UTC(),
+				// NOTE: Demo environment only available:
+				// 07:00 to 19:00
+				apiStart := time.Now()
+
+				// https://golangtutorial.dev/tips/http-post-json-go/
+				request, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(valueBytes))
+				if err != nil {
+					grpcLog.Errorln("http.NewRequest error: ", err)
+
+				}
+
+				request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+				response, err := client.Do(request)
+				if err != nil {
+					grpcLog.Errorln("client.Do error: ", err)
+
+				}
+				defer response.Body.Close()
+
+				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("API Call Time         :", time.Since(apiStart).Seconds(), "Sec")
+
+				}
+
+				body, _ = io.ReadAll(response.Body)
+				if vGeneral.Debuglevel > 2 {
+					grpcLog.Infoln("response Payload      :")
+					grpcLog.Infoln("response Status       :", response.Status)
+					grpcLog.Infoln("response Headers      :", response.Header)
+
+					if response.Status == "200 OK" {
+						// it's a paymentNT or addPayeeRT - SUCCESS
+						// it's a paymentRT or addPayeeRT and we have a very big body
+
+						json.Unmarshal(body, &tBody)
+						if vGeneral.Echojson == 1 {
+							grpcLog.Infoln("response Body        :")
+							prettyJSON(string(body))
+
+						} else {
+							grpcLog.Infoln("response Body         : JSON Printing Disabled!")
+
+						}
+
+					} else if response.Status == "204 No Content" {
+						// it's a paymentNRT or addPayeeNRT- SUCCESS
+						// lets build a body of the header and some additional information
+
+						grpcLog.Infoln("response Body         :")
+						tBody = map[string]interface{}{
+							"transactionId":   t_Payload["transactionId"],
+							"eventId":         t_Payload["eventId"],
+							"eventType":       t_Payload["eventType"],
+							"responseStatus":  response.Status,
+							"responseHeaders": response.Header,
+							"processTime":     time.Now().UTC(),
+						}
+
+					} else {
+						// oh sh$t, its not a success so now to try and build a body to fault fix later
+
+						grpcLog.Infoln("response Body        :", string(body))
+
+						grpcLog.Infoln("response Result         : FAILED POST")
+						tBody = map[string]interface{}{
+							"transactionId":   t_Payload["transactionId"],
+							"eventId":         t_Payload["eventId"],
+							"eventType":       t_Payload["eventType"],
+							"responseResult":  "FAILED POST",
+							"responseBody":    string(body),
+							"responseStatus":  response.Status,
+							"responseHeaders": response.Header,
+							"processTime":     time.Now().UTC(),
+						}
 					}
+
 				}
 
 			}
-
 		}
 
-		// even if we post to FS API or not, we want isolated control if we output to the json file.
+		// event if we post to FS API or not, we want isolated control if we output to the json file.
 		if vGeneral.Json_to_file == 1 {
-
-			fileStart := time.Now()
 
 			//...................................
 			// Writing struct type to a JSON file
@@ -892,74 +1152,188 @@ func runLoader() {
 			// Reading
 			// https://medium.com/kanoteknologi/better-way-to-read-and-write-json-file-in-golang-9d575b7254f2
 
-			tagId := t_Payload["eventId"]
+			if vGeneral.Json_from_file == 0 { // We're creating Fake Data
+				// We need to do 2 api calls, 1 each for outbound and inbound event.
 
-			loc_in := fmt.Sprintf("%s/%s.json", vGeneral.Output_path, tagId)
-			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("Output Event          :", loc_in)
+				// Outbound
+				fileStart := time.Now()
 
-			}
+				TransactionId := t_InboundPayload["transactionId"]
 
-			fd, err := json.MarshalIndent(t_Payload, "", " ")
-			if err != nil {
-				grpcLog.Errorln("MarshalIndent error", err)
+				OutboundTagId := t_OutboundPayload["eventId"]
 
-			}
-
-			err = ioutil.WriteFile(loc_in, fd, 0644)
-			if err != nil {
-				grpcLog.Errorln("ioutil.WriteFile error", err)
-
-			}
-
-			// Did we call the API endpoint above... if yes then do these steps
-			if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
-
-				loc_out := fmt.Sprintf("%s/%s-out.json", vGeneral.Output_path, tagId)
+				loc_in := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
 				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("engineResponse        :", loc_out)
+					grpcLog.Infoln("Outbound Output Event         :", loc_in)
 
 				}
 
-				fj, err := json.MarshalIndent(tBody, "", " ")
+				fd, err := json.MarshalIndent(t_OutboundPayload, "", " ")
 				if err != nil {
 					grpcLog.Errorln("MarshalIndent error", err)
 
 				}
 
-				err = ioutil.WriteFile(loc_out, fj, 0644)
+				err = os.WriteFile(loc_in, fd, 0644)
 				if err != nil {
-					grpcLog.Errorln("ioutil.WriteFile error", err)
+					grpcLog.Errorln("os.WriteFile error", err)
 
 				}
-			}
 
-			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("JSON to File Time     :", time.Since(fileStart).Seconds(), "Sec")
+				// Did we call the API endpoint above... if yes then do these steps
+				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
 
+					loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
+					if vGeneral.Debuglevel > 0 {
+						grpcLog.Infoln("engineResponse                :", loc_out)
+
+					}
+
+					fj, err := json.MarshalIndent(tOutboundBody, "", " ")
+					if err != nil {
+						grpcLog.Errorln("MarshalIndent error", err)
+
+					}
+
+					err = os.WriteFile(loc_out, fj, 0644)
+					if err != nil {
+						grpcLog.Errorln("os.WriteFile error", err)
+
+					}
+				}
+
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("Outbound JSON to File         :", time.Since(fileStart).Seconds(), "Sec")
+
+				}
+
+				// Inbound
+				fileStart = time.Now()
+
+				InboundTagId := t_InboundPayload["eventId"]
+
+				loc_in = fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("Inbound Output Event          :", loc_in)
+
+				}
+
+				fd, err = json.MarshalIndent(t_InboundPayload, "", " ")
+				if err != nil {
+					grpcLog.Errorln("MarshalIndent error", err)
+
+				}
+
+				err = os.WriteFile(loc_in, fd, 0644)
+				if err != nil {
+					grpcLog.Errorln("os.WriteFile error", err)
+
+				}
+
+				// Did we call the API endpoint above... if yes then do these steps
+				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+
+					loc_out := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+
+					if vGeneral.Debuglevel > 0 {
+						grpcLog.Infoln("engineResponse                :", loc_out)
+
+					}
+
+					fj, err := json.MarshalIndent(tInboundBody, "", " ")
+					if err != nil {
+						grpcLog.Errorln("MarshalIndent error", err)
+
+					}
+
+					err = os.WriteFile(loc_out, fj, 0644)
+					if err != nil {
+						grpcLog.Errorln("os.WriteFile error", err)
+
+					}
+				}
+
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("Inbound JSON to File          :", time.Since(fileStart).Seconds(), "Sec")
+
+				}
+
+			} else { // We're Reading data from file, so thats one call below for one file from above, loop iteration
+
+				fileStart := time.Now()
+
+				tagId := t_Payload["eventId"]
+
+				loc_in := fmt.Sprintf("%s%s%s.json", vGeneral.Output_path, pathSep, tagId)
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("Output Event                  :", loc_in)
+
+				}
+
+				fd, err := json.MarshalIndent(t_Payload, "", " ")
+				if err != nil {
+					grpcLog.Errorln("MarshalIndent error", err)
+
+				}
+
+				err = os.WriteFile(loc_in, fd, 0644)
+				if err != nil {
+					grpcLog.Errorln("os.WriteFile error", err)
+
+				}
+
+				// Did we call the API endpoint above... if yes then do these steps
+				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+
+					loc_out := fmt.Sprintf("%s%s%s-out.json", vGeneral.Output_path, pathSep, tagId)
+					if vGeneral.Debuglevel > 0 {
+						grpcLog.Infoln("engineResponse                :", loc_out)
+
+					}
+
+					fj, err := json.MarshalIndent(tBody, "", " ")
+					if err != nil {
+						grpcLog.Errorln("MarshalIndent error", err)
+
+					}
+
+					err = os.WriteFile(loc_out, fj, 0644)
+					if err != nil {
+						grpcLog.Errorln("os.WriteFile error", err)
+
+					}
+				}
+
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("JSON to File Time             :", time.Since(fileStart).Seconds(), "Sec")
+
+				}
 			}
 		}
 
 		if vGeneral.Debuglevel > 0 {
-			grpcLog.Infoln("Total Time            :", time.Since(txnStart).Seconds(), "Sec")
+			grpcLog.Infoln("Total Time                    :", time.Since(txnStart).Seconds(), "Sec")
 
 		}
 
 		//////////////////////////////////////////////////
+		//
 		// THIS IS SLEEP BETWEEN RECORD POSTS
 		//
 		// if 0 then sleep is disabled otherwise
 		//
 		// lets get a random value 0 -> vGeneral.sleep, then delay/sleep as up to that fraction of a second.
-		// this mimics someone thinking, as if this is being done by a human at a keyboard, for batcvh file processing we don't have this.
+		// this mimics someone thinking, as if this is being done by a human at a keyboard, for batch file processing we don't have this.
 		// ie if the user said 200 then it implies a randam value from 0 -> 200 milliseconds.
+		//
+		// USED TO SLOW THINGS DOWN
+		//
 		//////////////////////////////////////////////////
 
 		if vGeneral.Sleep != 0 {
-			rand.Seed(time.Now().UnixNano())
 			n := rand.Intn(vGeneral.Sleep) // if vGeneral.sleep = 1000, then n will be random value of 0 -> 1000  aka 0 and 1 second
 			if vGeneral.Debuglevel >= 2 {
-				grpcLog.Infof("Going to sleep for    : %d Milliseconds\n", n)
+				grpcLog.Infof("Going to sleep for            : %d Milliseconds\n", n)
 
 			}
 			time.Sleep(time.Duration(n) * time.Millisecond)
@@ -974,21 +1348,26 @@ func runLoader() {
 
 		if vGeneral.Debuglevel >= 1 {
 			vEnd := time.Now()
-			grpcLog.Infoln("Start      : ", vStart)
-			grpcLog.Infoln("End        : ", vEnd)
-			grpcLog.Infoln("Duration   : ", vEnd.Sub(vStart))
-			grpcLog.Infoln("Records    : ", vGeneral.Testsize)
+			grpcLog.Infoln("Start                         : ", vStart)
+			grpcLog.Infoln("End                           : ", vEnd)
+			grpcLog.Infoln("Duration                      : ", vEnd.Sub(vStart))
+			grpcLog.Infoln("Records                       : ", todo_count)
+
 			grpcLog.Infoln("")
 		}
 	}
 
-} // runEFTLoader()
+} // runLoader()
 
 func main() {
 
+	var arg string
+
 	grpcLog.Info("****** Starting           *****")
 
-	runLoader()
+	arg = os.Args[1]
+
+	runLoader(arg)
 
 	grpcLog.Info("****** Completed          *****")
 

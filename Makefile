@@ -16,7 +16,7 @@ build:
 	go build -o bin/${BINARY_NAME} ./cmd
 
 buildexe:
-	GOOS=windows GOARCH=amd64 go build -o bin/${BINARY_NAME}.exe ./
+	GOOS=windows GOARCH=amd64 go build -o bin/${BINARY_NAME}.exe ./cmd
 
 run: build 
 

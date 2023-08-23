@@ -1,0 +1,68 @@
+{
+ "tenantId": "CBZAZAJJ", 
+ "direction": "outbound", 
+ "fromId": "CBZAZAJJ",
+ "toId": "NEDSZAJJ",
+ "transactionId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33", 
+ "eventId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33pro", 
+ "eventTime": "2023-08-15T12:59:02", 
+ "eventType": "addPayeeRT", 
+ "creationDate": "2023-08-15T12:59:02", 
+ "accountAddress": {
+  "addressLine1": "PRR.assignment.creator.party.address.streetName",
+  "addressLine2": "PRR.assignment.creator.party.address.buildingNumber and buildingName",
+  "country": "ZAF",
+  "countrySubDivision": "PRR.assignment.creator.party.address.countrySubDivision",
+  "postalCode": "PRR.assignment.creator.party.address.postCode",
+  "townName": "PRR.assignment.creator.party.address.townName",
+  "fullAddress": "PRR.assignment.creator.party.address.addressLine"
+ }, 
+ "accountName": {
+  "fullName": "PRR.assignment.creator.party.name",
+  "namePrefix": "PRR",
+  "surname": "Name"
+ }, 
+ "accountBICFI": "PRR.assignment.creator.agent.BICFI",
+ "accountDomain": "PRR.assignment.creator.agent.domain",
+ "accountCustomerId": "PRR.assignment.creator.party.identification.organisationIdentification or privateIdentification",
+ "accountCustomerEntityId": "PRR.assignment.creator.party.identification.organisationIdentification or privateIdentification",
+ "accountEmail": "PRR.assignment.creator.party.contactDetails.emailAdress",
+ "accountPhoneNumber": "PRR.assignment.creator.party.contactDetails.mobileNumber",
+ "amount": {
+  "baseCurrency": "zar",
+  "baseValue": 2150.00,
+  "currency": "zar",
+  "value": 2150.00
+ }, 
+ "counterpartyAddress": {
+  "addressLine1": "PRR.report.updtdPtyAndAcctId.party.address.streetName",
+  "addressLine2": "PRR.report.updtdPtyAndAcctId.party.address.buildingNumber and buildingName",
+  "country": "ZAF",
+  "countrySubDivision": "PRR.report.updtdPtyAndAcctId.party.address.countrySubDivision",
+  "postalCode": "PRR.report.updtdPtyAndAcctId.party.address.postCode",
+  "townName": "PRR.report.updtdPtyAndAcctId.party.address.townName",
+  "fullAddress": "PRR.report.updtdPtyAndAcctId.party.address.addressLine"
+ }, 
+ "counterpartyId": "12345210456",
+ "counterpartyName": {
+  "fullName": "PRR.report.updtdPtyAndAcctId.account.name",
+  "namePrefix": "PRR",
+  "surname": "Name"
+ }, 
+ "counterpartyBICFI": "NEDSZAJJ",
+ "counterpartyDomain": "PRR.report.updtdPtyAndAcctId.agent.domain",
+ "counterpartyCustomerId": "PRR.report.updtdPtyAndAcctId.party.identification.organisationIdentification or privateIdentification",
+ "counterpartyCustomerEntityId": "PRR.report.updtdPtyAndAcctId.party.identification.organisationIdentification or privateIdentification",
+ "counterpartyNumber": "PRR.report.updtdPtyAndAcctId.account.identification",
+ "counterpartyEmail": "PRR.report.updtdPtyAndAccId.party.contactDetails.emailAddress",
+ "counterpartyPhoneNumber": "PRR.report.updtdPtyAndAcctId.party.contactDetails.mobileNumber",
+ "accountOpenDate": "PRR.report.updtdPtyAndAcctId.account.createDate",
+ "counterpartyProxyId": "0745896312",
+ "counterpartyProxyEntityId": "PRR.report.updtdPtyAndAcctId.account.proxy",
+ "counterpartyProxyType": "PRR.report.updtdPtyAndAcctId.account.proxyType",
+ "msgStatus": "New", 
+ "msgStatusReason": "PRR.report.reason.verificationReasonCode", 
+ "verificationType": "PRR.report.reason.verificationReasonCode", 
+ "schemaVersion": 1,
+ "verificationResult": "PRR.report.verification"
+ }
