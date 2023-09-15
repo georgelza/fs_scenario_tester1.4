@@ -609,8 +609,8 @@ func constructFinTransaction() (t_OutboundPayment map[string]interface{}, t_Inbo
 				NamePrefix: jDebtorAccount.Name.NamePrefix,
 				Surname:    jDebtorAccount.Name.Surname,
 			},
-			"creationDate":                      time.Now().Format("2006-01-02T15:04:05"),
-			"customerId":                        jCreditorAccount.AccountNumber,
+			"creationDate": time.Now().Format("2006-01-02T15:04:05"),
+			//"customerId":                        jCreditorAccount.AccountNumber,
 			"destinationCountry":                "ZAF",
 			"direction":                         "inbound",
 			"eventId":                           uuid.New().String(),
@@ -848,13 +848,13 @@ func runLoader(arg string) {
 			// They are just to different to have kept in one function, so split them into 2 seperate specific use case functions.
 			t_OutboundPayload, t_InboundPayload = constructFinTransaction()
 
-			OutboundBytes, err := json.Marshal(t_OutboundPayload)
+			OutboundBytes, err = json.Marshal(t_OutboundPayload)
 			if err != nil {
 				grpcLog.Errorln("Marchalling error: ", err)
 
 			}
 
-			InboundBytes, err := json.Marshal(t_InboundPayload)
+			InboundBytes, err = json.Marshal(t_InboundPayload)
 			if err != nil {
 				grpcLog.Errorln("Marchalling error: ", err)
 
@@ -910,7 +910,7 @@ func runLoader(arg string) {
 			}
 			// check to see if we're calling API, if yes then make the call
 
-			valueBytes, err := json.Marshal(t_Payload)
+			valueBytes, err = json.Marshal(t_Payload)
 			if err != nil {
 				grpcLog.Errorln("Marchalling error: ", err)
 
@@ -962,7 +962,7 @@ func runLoader(arg string) {
 						// it's a paymentNRT - SUCCESS
 						// lets build a body of the header and some additional information
 
-						grpcLog.Infoln("response Body         : paymentNRT")
+						grpcLog.Infoln("response Body         	: paymentNRT")
 						tOutboundBody = map[string]interface{}{
 							"transactionId":   t_OutboundPayload["transactionId"],
 							"eventId":         t_OutboundPayload["eventId"],
@@ -1079,15 +1079,15 @@ func runLoader(arg string) {
 
 				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
 				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("API Call Time         :", time.Since(apiStart).Seconds(), "Sec")
+					grpcLog.Infoln("API Call Time         	:", time.Since(apiStart).Seconds(), "Sec")
 
 				}
 
 				body, _ = io.ReadAll(response.Body)
 				if vGeneral.Debuglevel > 2 {
-					grpcLog.Infoln("response Payload      :")
-					grpcLog.Infoln("response Status       :", response.Status)
-					grpcLog.Infoln("response Headers      :", response.Header)
+					grpcLog.Infoln("response Payload      	:")
+					grpcLog.Infoln("response Status       	:", response.Status)
+					grpcLog.Infoln("response Headers      	:", response.Header)
 
 					if response.Status == "200 OK" {
 						// it's a paymentNT or addPayeeRT - SUCCESS
@@ -1095,11 +1095,11 @@ func runLoader(arg string) {
 
 						json.Unmarshal(body, &tBody)
 						if vGeneral.Echojson == 1 {
-							grpcLog.Infoln("response Body        :")
+							grpcLog.Infoln("response Body        	:")
 							prettyJSON(string(body))
 
 						} else {
-							grpcLog.Infoln("response Body         : JSON Printing Disabled!")
+							grpcLog.Infoln("response Body         	: JSON Printing Disabled!")
 
 						}
 
@@ -1107,7 +1107,7 @@ func runLoader(arg string) {
 						// it's a paymentNRT or addPayeeNRT- SUCCESS
 						// lets build a body of the header and some additional information
 
-						grpcLog.Infoln("response Body         :")
+						grpcLog.Infoln("response Body         	:")
 						tBody = map[string]interface{}{
 							"transactionId":   t_Payload["transactionId"],
 							"eventId":         t_Payload["eventId"],
@@ -1120,7 +1120,7 @@ func runLoader(arg string) {
 					} else {
 						// oh sh$t, its not a success so now to try and build a body to fault fix later
 
-						grpcLog.Infoln("response Body        :", string(body))
+						grpcLog.Infoln("response Body        	:", string(body))
 
 						grpcLog.Infoln("response Result         : FAILED POST")
 						tBody = map[string]interface{}{

@@ -1,15 +1,15 @@
 {
-    "echoConfig": 1,                        # echo this file to the terminal
+    "echoConfig": 0,                        # echo this file to the terminal
     "debuglevel": 3,                        # 0=no logging, up to 4 ull logging enabled
     "echojson": 0,                          # Echo output JSON to terminal
-    "EchoSeed": 1,                          # do we want to echo the see data to the console
-    "httpposturl": "https://bankservafrica-sit.aric.featurespace.co.uk:8443/events",
-    "Call_fs_api": 0,
+    "EchoSeed": 0,                          # do we want to echo the see data to the console
+    "httpposturl": "https://api.bankservafrica-sit.aric.featurespace.co.uk/events",
+    "Call_fs_api": 1,
     "cert_dir": "sitcerts",                 # Directory where we will store the certs
     "cert_file": "client.crt",
     "cert_key": "client.key",
     "datamode": "rpp",                      # rpp or hist, hist implying historical systems, ie eft, rtc or ac collections
-    "json_from_file": 1,                    # if this is 0 then we generate/create fake data using seed file, otherwise we're read the input_path for input files
+    "json_from_file": 0,                    # if this is 0 then we generate/create fake data using seed file, otherwise we're read the input_path for input files
     "input_path": "json_sit_reg_source1",   # Input directory where events/scenario's are stored                  
     "json_to_file": 1,                      # do we output created event and engineresponse to file system          
     "output_path": "json_sit_reg_output1",  # where to write output to

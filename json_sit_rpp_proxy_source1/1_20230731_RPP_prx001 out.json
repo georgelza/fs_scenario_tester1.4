@@ -1,13 +1,13 @@
 {
- "tenantId": "CBZAZAJJ", 
+ "tenantId": "SBZAZAJJ", 
  "direction": "outbound", 
- "fromId": "CBZAZAJJ",
- "toId": "NEDSZAJJ",
- "transactionId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33", 
- "eventId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33pro", 
- "eventTime": "2023-08-15T12:59:02", 
+ "fromId": "SBZAZAJJ",
+ "toId": "ABSAZAJJ",
+ "transactionId": "90dd6235-de78-1234-9999-0fcc2023f6f6", 
+ "eventId": "90dd6235-de78-1234-9999-0fcc2023f6f6o", 
+ "eventTime": "2023-07-31T12:59:02", 
  "eventType": "addPayeeRT", 
- "creationDate": "2023-08-15T12:59:02", 
+ "creationDate": "2023-07-31T12:59:02", 
  "accountAddress": {
   "addressLine1": "PRR.assignment.creator.party.address.streetName",
   "addressLine2": "PRR.assignment.creator.party.address.buildingNumber and buildingName",
@@ -30,9 +30,9 @@
  "accountPhoneNumber": "PRR.assignment.creator.party.contactDetails.mobileNumber",
  "amount": {
   "baseCurrency": "zar",
-  "baseValue": 2150.00,
+  "baseValue": 1000.00,
   "currency": "zar",
-  "value": 2150.00
+  "value": 1000.00
  }, 
  "counterpartyAddress": {
   "addressLine1": "PRR.report.updtdPtyAndAcctId.party.address.streetName",
@@ -43,13 +43,13 @@
   "townName": "PRR.report.updtdPtyAndAcctId.party.address.townName",
   "fullAddress": "PRR.report.updtdPtyAndAcctId.party.address.addressLine"
  }, 
- "counterpartyId": "12345210456",
+ "counterpartyId": "12345210016",
  "counterpartyName": {
   "fullName": "PRR.report.updtdPtyAndAcctId.account.name",
   "namePrefix": "PRR",
   "surname": "Name"
  }, 
- "counterpartyBICFI": "NEDSZAJJ",
+ "counterpartyBICFI": "PRR.report.updtdPtyAndAcctId.agent.BICFI",
  "counterpartyDomain": "PRR.report.updtdPtyAndAcctId.agent.domain",
  "counterpartyCustomerId": "PRR.report.updtdPtyAndAcctId.party.identification.organisationIdentification or privateIdentification",
  "counterpartyCustomerEntityId": "PRR.report.updtdPtyAndAcctId.party.identification.organisationIdentification or privateIdentification",
@@ -57,7 +57,7 @@
  "counterpartyEmail": "PRR.report.updtdPtyAndAccId.party.contactDetails.emailAddress",
  "counterpartyPhoneNumber": "PRR.report.updtdPtyAndAcctId.party.contactDetails.mobileNumber",
  "accountOpenDate": "PRR.report.updtdPtyAndAcctId.account.createDate",
- "counterpartyProxyId": "0745896312",
+ "counterpartyProxyId": "PRR.report.updtdPtyAndAcctId.account.proxy",
  "counterpartyProxyEntityId": "PRR.report.updtdPtyAndAcctId.account.proxy",
  "counterpartyProxyType": "PRR.report.updtdPtyAndAcctId.account.proxyType",
  "msgStatus": "New", 

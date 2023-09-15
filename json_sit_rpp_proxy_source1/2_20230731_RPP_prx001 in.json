@@ -1,13 +1,13 @@
 {
- "tenantId": "NEDSZAJJ", 
+ "tenantId": "ABSAZAJJ", 
  "direction": "inbound", 
- "fromId": "CBZAZAJJ", 
- "toId": "NEDSZAJJ", 
- "transactionId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33", 
- "eventId": "90dd9238-zzzz-5g5g-8356-0fcc8055k55k33pri", 
- "eventTime": "2023-08-15T12:59:02", 
+ "fromId": "SBZAZAJJ", 
+ "toId": "ABSAZAJJ", 
+ "transactionId": "90dd6235-de78-1234-9999-0fcc2023f6f6", 
+ "eventId": "90dd6235-de78-1234-9999-0fcc2023f6f6i", 
+ "eventTime": "2023-07-31T12:59:02", 
  "eventType": "addPayeeNRT", 
- "creationDate": "2023-08-15T12:59:02", 
+ "creationDate": "2023-07-31T12:59:02", 
  "accountAddress": {
   "addressLine1": "PRR.report.updtdPtyAndAcctId.party.address.streetName",
   "addressLine2": "PRR.report.updtdPtyAndAcctId.party.address.buildingNumber and buildingName",
@@ -17,7 +17,7 @@
   "townName": "PRR.report.updtdPtyAndAcctId.party.address.townName",
   "fullAddress": "PRR.report.updtdPtyAndAcctId.party.address.addressLine"
  }, 
- "accountId": "12345210456", 
+ "accountId": "12345210016", 
  "accountName": { 
   "fullName": "PRR.report.updtdPtyAndAcctId.account.name", 
   "namePrefix": "PRR",
@@ -25,7 +25,7 @@
  },
  "accountType": "PRR.report.updtdPtyAndAcctId.account.type", 
  "accountOpenDate": "PRR.report.updtdPtyAndAcctId.account.createDate", 
- "accountBICFI": "NEDSZAJJ", 
+ "accountBICFI": "PRR.report.updtdPtyAndAcctId.agent.BICFI", 
  "accountDomain": "PRR.report.updtdPtyAndAcctId.agent.domain", 
  "accountCustomerId": "PRR.report.updtdPtyAndAcctId.party.identification.organisationIdentification or privateIdentification", 
  "accountCustomerEntityId": "PRR.report.updtdPtyAndAcctId.party.organisationIdentification or privateIdentification", 
@@ -33,13 +33,13 @@
  "accountPhoneNumber": "PRR.report.updtdPtyAndAcctId.party.contractDetails.mobileNumber", 
  "accountNumber": "PRR.report.updtdPtyAndAcctId.account.identification", 
  "accountProxyType": "PRR.report.updtdPtyAndAcctId.account.proxyType", 
- "accountProxyId": "0745896312", 
+ "accountProxyId": "PRR.report.updtdPtyAndAcctId.account.proxy", 
  "accountProxyEntityId": "PRR.report.updtdPtyAndAcctId.account.proxy", 
  "amount": { 
   "baseCurrency": "zar",
-  "baseValue": 2150.00,
+  "baseValue": 1000.00,
   "currency": "zar",
-  "value": 2150.00
+  "value": 1000.00
  },
  "counterpartyAddress": { 
   "addressLine1": "PRR.assignment.creator.party.address.streetName",

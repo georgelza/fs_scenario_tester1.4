@@ -4,7 +4,7 @@
     "echojson": 0,                          # Echo output JSON to terminal
     "EchoSeed": 0,                          # do we want to echo the see data to the console
     "httpposturl": "https://dev-env.bankservafrica.prod.risk-hub.io:8443/events",
-    "Call_fs_api": 0,
+    "Call_fs_api": 1,
     "cert_dir": "democerts",                # Directory where we will store the certs
     "cert_file": "client.crt",
     "cert_key": "client.key",
