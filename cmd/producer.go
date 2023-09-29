@@ -42,6 +42,9 @@
 *					: (2.0)			- if non RT then it creates 2 x NRT based payments.
 *					:				- Add capability on the file input functionality to read/post AddProxy files.
 *
+*					: 28 Sept 2023	- For processing from file, collapsing inbound and outbound event into a single file (2 json payloads inside a array),
+*					: 				- to enable us to refresh the trasanctionid so that both events match.
+*
 *
 *	By				: George Leonard (georgelza@gmail.com)
 *
@@ -60,6 +63,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"reflect"
 	"runtime"
 	"strconv"
 	"time"
@@ -95,7 +99,7 @@ func init() {
 
 	grpcLog.Infoln("###############################################################")
 	grpcLog.Infoln("#")
-	grpcLog.Infoln("#   Project   : TFM 2.0")
+	grpcLog.Infoln("#   Project   : TFM 2.1")
 	grpcLog.Infoln("#")
 	grpcLog.Infoln("#   Comment   : FeatureSpace Scenario Publisher / Fake Data Generator")
 	grpcLog.Infoln("#             : To be Event/Alert publisher")
@@ -116,9 +120,11 @@ func loadConfig(params ...string) types.Tp_general {
 
 	vGeneral := types.Tp_general{}
 	env := "dev"
-	if len(params) > 0 {
+	if len(params) > 0 { // Input environment was specified, so lets use it
 		env = params[0]
-		grpcLog.Info("Called with ", env)
+		grpcLog.Info("*")
+		grpcLog.Info("* Called with ", env)
+		grpcLog.Info("*")
 
 	}
 
@@ -674,17 +680,78 @@ func isJSON(content []byte) (isJson bool) {
 	return isJson
 }
 
-func contructEventFromJSONFile(varRec string) (t_Payload map[string]interface{}) {
+func contructEventFromJSONFile(varRec string) (t_OutboundPayment map[string]interface{}, t_InboundPayment map[string]interface{}) {
 
-	content := ReadJSONFile(varRec)
+	var objs interface{}
 
-	err := json.Unmarshal(content, &t_Payload)
+	// read our opened jsonFile as a byte array.
+	byteValue, err := os.ReadFile(varRec)
+	if err != nil {
+		grpcLog.Errorln("ReadFile error ", err)
+
+	}
+
+	// we unmarshal our byteArray which contains our
+	// jsonFile's content into 'users' which we defined above
+	err = json.Unmarshal([]byte(byteValue), &objs)
 	if err != nil {
 		grpcLog.Errorln("Unmarshall error ", err)
 
 	}
 
-	return t_Payload
+	// Ensure that it is an array of objects.
+	objArr, ok := objs.([]interface{})
+	if !ok {
+		grpcLog.Errorln("expected an array of objects ")
+
+	}
+
+	// Handle each object as a map[string]interface{}.
+	for i, obj := range objArr {
+		obj, ok := obj.(map[string]interface{})
+		if !ok {
+			grpcLog.Errorln(fmt.Sprintf("expected type map[string]interface{}, got %s", reflect.TypeOf(objArr[i])))
+
+		}
+		if i == 0 {
+			t_InboundPayment = obj
+
+		}
+		if i == 1 {
+			t_OutboundPayment = obj
+
+		}
+	}
+
+	txnId := uuid.New().String()
+	eventTime := time.Now().Format("2006-01-02T15:04:05")
+	creationDate := time.Now().Format("2006-01-02T15:04:05")
+	requestExecutionDate := time.Now().Format("2006-01-02")
+	settlementDate := time.Now().Format("2006-01-02")
+
+	// we update/refresh the eventID & eventTime, to ensure we don't get duplicate (and make it a payment in) id's at POST time
+	t_OutboundPayment["eventId"] = uuid.New().String()
+	t_InboundPayment["eventId"] = uuid.New().String()
+
+	t_OutboundPayment["transactionId"] = txnId
+	t_InboundPayment["transactionId"] = txnId
+
+	t_OutboundPayment["eventTime"] = eventTime
+	t_InboundPayment["eventTime"] = eventTime
+
+	t_InboundPayment["creationDate"] = creationDate
+	t_OutboundPayment["creationDate"] = creationDate
+
+	if t_InboundPayment["eventType"] == "paymentRT" || t_InboundPayment["eventType"] == "paymentNRT" || t_OutboundPayment["eventType"] == "paymentRT" || t_OutboundPayment["eventType"] == "paymentNRT" {
+
+		t_InboundPayment["requestExecutionDate"] = requestExecutionDate
+		t_InboundPayment["settlementDate"] = settlementDate
+
+		t_OutboundPayment["requestExecutionDate"] = requestExecutionDate
+		t_OutboundPayment["settlementDate"] = settlementDate
+	}
+
+	return t_OutboundPayment, t_InboundPayment
 }
 
 // Return list of files located in input_path to be repackaged as JSON payloads and posted onto the API endpoint
@@ -714,9 +781,15 @@ func fetchJSONRecords(input_path string) (records map[int]string, count int) {
 	return records, count
 }
 
+func formatJSON(data []byte) ([]byte, error) {
+	var out bytes.Buffer
+	err := json.Indent(&out, data, "", "    ")
+	if err == nil {
+		return out.Bytes(), err
+	}
+	return data, nil
+}
 func runLoader(arg string) {
-
-	fmt.Println(arg)
 
 	// Initialize the vGeneral struct variable - This holds our configuration settings.
 	vGeneral = loadConfig(arg)
@@ -836,39 +909,11 @@ func runLoader(arg string) {
 		var Inboundbody []byte
 		var tInboundBody map[string]interface{}
 
-		// We're reading data from file so it's 1 event per loop
-		var t_Payload map[string]interface{}
-		var valueBytes []byte
-		var body []byte
-		var tBody map[string]interface{}
-
 		// Build the entire JSON Payload document, either a fake record or from a input/scenario JSON file
 		if vGeneral.Json_from_file == 0 { // Build Fake Record
 
 			// They are just to different to have kept in one function, so split them into 2 seperate specific use case functions.
 			t_OutboundPayload, t_InboundPayload = constructFinTransaction()
-
-			OutboundBytes, err = json.Marshal(t_OutboundPayload)
-			if err != nil {
-				grpcLog.Errorln("Marchalling error: ", err)
-
-			}
-
-			InboundBytes, err = json.Marshal(t_InboundPayload)
-			if err != nil {
-				grpcLog.Errorln("Marchalling error: ", err)
-
-			}
-
-			if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
-				grpcLog.Infoln("Outbound Payload   	:")
-				prettyJSON(string(OutboundBytes))
-
-				grpcLog.Infoln("")
-
-				grpcLog.Infoln("Inbound Payload   	:")
-				prettyJSON(string(InboundBytes))
-			}
 
 		} else {
 			// We're reading data from files, so simply post data per file/payload
@@ -882,264 +927,225 @@ func runLoader(arg string) {
 				grpcLog.Infoln("Source Event                  :", filename)
 
 			}
-			t_Payload = contructEventFromJSONFile(filename)
+			t_OutboundPayload, t_InboundPayload = contructEventFromJSONFile(filename)
+		}
 
-			// we update/refresh the eventID & eventTime, to ensure we don't get duplicate (and make it a payment in) id's at POST time
-			t_Payload["eventId"] = uuid.New().String()
-			t_Payload["eventTime"] = time.Now().Format("2006-01-02T15:04:05")
-			t_Payload["transactionId"] = uuid.New().String()
-			t_Payload["creationDate"] = time.Now().Format("2006-01-02T15:04:05")
+		if vGeneral.Debuglevel > 1 {
 
-			if t_Payload["eventType"] == "paymentRT" || t_Payload["eventType"] == "paymentNRT" {
-				t_Payload["requestExecutionDate"] = time.Now().Format("2006-01-02")
-				t_Payload["settlementDate"] = time.Now().Format("2006-01-02")
+			grpcLog.Infoln("transactionId assigned        :", t_OutboundPayload["transactionId"])
+			grpcLog.Infoln("eventTime assigned            :", t_OutboundPayload["eventTime"])
+			grpcLog.Infoln("creationDate assigned         :", t_OutboundPayload["creationDate"])
 
-			}
+			grpcLog.Infoln("Outbound        :")
+			grpcLog.Infoln("eventId assigned              :", t_OutboundPayload["eventId"])
 
-			if vGeneral.Debuglevel > 1 {
-				grpcLog.Infoln("transactionId assigned        :", t_Payload["transactionId"])
-				grpcLog.Infoln("eventId assigned              :", t_Payload["eventId"])
-				grpcLog.Infoln("eventTime assigned            :", t_Payload["eventTime"])
-				grpcLog.Infoln("creationDate assigned         :", t_Payload["creationDate"])
-
-				if t_Payload["eventType"] == "paymentRT" || t_Payload["eventType"] == "paymentNRT" {
-					grpcLog.Infoln("requestExecutionDate assigned :", t_Payload["requestExecutionDate"])
-					grpcLog.Infoln("settlementDate assigned       :", t_Payload["settlementDate"])
-
-				}
-			}
-			// check to see if we're calling API, if yes then make the call
-
-			valueBytes, err = json.Marshal(t_Payload)
-			if err != nil {
-				grpcLog.Errorln("Marchalling error: ", err)
+			if t_OutboundPayload["eventType"] == "paymentNRT" {
+				grpcLog.Infoln("requestExecutionDate assigned :", t_OutboundPayload["requestExecutionDate"])
+				grpcLog.Infoln("settlementDate assigned       :", t_OutboundPayload["settlementDate"])
 
 			}
-			if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
-				grpcLog.Infoln("Output Payload   	:")
-				prettyJSON(string(valueBytes))
+
+			grpcLog.Infoln("Inbound         :")
+			grpcLog.Infoln("eventId assigned              :", t_InboundPayload["eventId"])
+
+			if t_InboundPayload["eventType"] == "paymentRT" || t_InboundPayload["eventType"] == "paymentNRT" {
+				grpcLog.Infoln("requestExecutionDate assigned :", t_InboundPayload["requestExecutionDate"])
+				grpcLog.Infoln("settlementDate assigned       :", t_InboundPayload["settlementDate"])
+
 			}
+		}
+		// check to see if we're calling API, if yes then make the call
+
+		OutboundBytes, err = json.Marshal(t_OutboundPayload)
+		if err != nil {
+			grpcLog.Errorln("Marchalling error: ", err)
+
+		}
+
+		InboundBytes, err = json.Marshal(t_InboundPayload)
+		if err != nil {
+			grpcLog.Errorln("Marchalling error: ", err)
+
+		}
+
+		if vGeneral.Debuglevel > 1 && vGeneral.Echojson == 1 {
+			grpcLog.Infoln("Outbound Payload   	:")
+			prettyJSON(string(OutboundBytes))
+
+			grpcLog.Infoln("")
+
+			grpcLog.Infoln("Inbound Payload   	:")
+			prettyJSON(string(InboundBytes))
 		}
 
 		if vGeneral.Call_fs_api == 1 { // POST to API endpoint
 
-			if vGeneral.Json_from_file == 0 { // We're creating Fake Data
-				// We need to do 2 api calls, 1 each for outbound and inbound event.
+			// We need to do 2 api calls, 1 each for outbound and inbound event.
 
-				// Outbound
+			// Outbound
 
-				apiOutboundStart := time.Now()
+			apiOutboundStart := time.Now()
 
-				// https://golangtutorial.dev/tips/http-post-json-go/
-				OutboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(OutboundBytes))
-				if err != nil {
-					grpcLog.Errorln("http.NewRequest error: ", err)
+			// https://golangtutorial.dev/tips/http-post-json-go/
+			OutboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(OutboundBytes))
+			if err != nil {
+				grpcLog.Errorln("http.NewRequest error: ", err)
 
-				}
+			}
 
-				OutboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
+			OutboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
-				OutboundResponse, err := client.Do(OutboundRequest)
-				if err != nil {
-					grpcLog.Errorln("client.Do error: ", err)
+			OutboundResponse, err := client.Do(OutboundRequest)
+			if err != nil {
+				grpcLog.Errorln("client.Do error: ", err)
 
-				}
-				defer OutboundResponse.Body.Close()
+			}
+			defer OutboundResponse.Body.Close()
 
-				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("API Call Time         :", time.Since(apiOutboundStart).Seconds(), "Sec")
+			// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("API Call Time         :", time.Since(apiOutboundStart).Seconds(), "Sec")
 
-				}
+			}
 
-				Outboundbody, _ = io.ReadAll(OutboundResponse.Body)
+			// Do something with all the output/response
+			Outboundbody, err = io.ReadAll(OutboundResponse.Body)
+			if err != nil {
+				grpcLog.Errorln("Outbound Body -> io.ReadAll(OutboundResponse.Body) error: ", err)
+
+			}
+			if vGeneral.Debuglevel > 2 {
+				grpcLog.Infoln("response Payload      :")
+				grpcLog.Infoln("response Status       :", OutboundResponse.Status)
+				grpcLog.Infoln("response Headers      :", OutboundResponse.Header)
+			}
+
+			if OutboundResponse.Status == "204 No Content" {
+				// it's a paymentNRT - SUCCESS
+				// lets build a body of the header and some additional information
 				if vGeneral.Debuglevel > 2 {
-					grpcLog.Infoln("response Payload      :")
-					grpcLog.Infoln("response Status       :", OutboundResponse.Status)
-					grpcLog.Infoln("response Headers      :", OutboundResponse.Header)
 
-					if OutboundResponse.Status == "204 No Content" {
-						// it's a paymentNRT - SUCCESS
-						// lets build a body of the header and some additional information
-
-						grpcLog.Infoln("response Body         	: paymentNRT")
-						tOutboundBody = map[string]interface{}{
-							"transactionId":   t_OutboundPayload["transactionId"],
-							"eventId":         t_OutboundPayload["eventId"],
-							"eventType":       t_OutboundPayload["eventType"],
-							"responseStatus":  OutboundResponse.Status,
-							"responseHeaders": OutboundResponse.Header,
-							"processTime":     time.Now().UTC(),
-						}
-
-					} else {
-						// oh sh$t, its not a success so now to try and build a body to fault fix later
-
-						grpcLog.Infoln("response Body         :", string(Outboundbody))
-						grpcLog.Infoln("response Result       : FAILED POST")
-						tOutboundBody = map[string]interface{}{
-							"transactionId":   t_OutboundPayload["transactionId"],
-							"eventId":         t_OutboundPayload["eventId"],
-							"eventType":       t_OutboundPayload["eventType"],
-							"responseResult":  "FAILED POST",
-							"responseBody":    string(Outboundbody),
-							"responseStatus":  OutboundResponse.Status,
-							"responseHeaders": OutboundResponse.Header,
-							"processTime":     time.Now().UTC(),
-						}
-					}
-
+					grpcLog.Infoln("response Body         	: <...>NRT")
+				}
+				tOutboundBody = map[string]interface{}{
+					"transactionId":   t_OutboundPayload["transactionId"],
+					"eventId":         t_OutboundPayload["eventId"],
+					"eventType":       t_OutboundPayload["eventType"],
+					"responseStatus":  OutboundResponse.Status,
+					"responseHeaders": OutboundResponse.Header,
+					"processTime":     time.Now().UTC(),
 				}
 
-				// Inbound
-				apiInboundStart := time.Now()
-
-				// https://golangtutorial.dev/tips/http-post-json-go/
-				InboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(InboundBytes))
-				if err != nil {
-					grpcLog.Errorln("http.NewRequest error: ", err)
-
-				}
-
-				InboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-				InboundResponse, err := client.Do(InboundRequest)
-				if err != nil {
-					grpcLog.Errorln("client.Do error: ", err)
-
-				}
-				defer InboundResponse.Body.Close()
-
-				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("API Call Time         :", time.Since(apiInboundStart).Seconds(), "Sec")
-
-				}
-
-				Inboundbody, _ = io.ReadAll(InboundResponse.Body)
+			} else {
+				// oh sh$t, its not a success so now to try and build a body to fault fix later
 				if vGeneral.Debuglevel > 2 {
-					grpcLog.Infoln("response Payload      :")
-					grpcLog.Infoln("response Status       :", InboundResponse.Status)
-					grpcLog.Infoln("response Headers      :", InboundResponse.Header)
 
-					if InboundResponse.Status == "200 OK" {
-						// it's a paymentNRT - SUCCESS
-						// lets build a body of the header and some additional information
+					grpcLog.Infoln("response Body         :", string(Outboundbody))
+					grpcLog.Infoln("response Result       : FAILED POST")
+				}
+				tOutboundBody = map[string]interface{}{
+					"transactionId":   t_OutboundPayload["transactionId"],
+					"eventId":         t_OutboundPayload["eventId"],
+					"eventType":       t_OutboundPayload["eventType"],
+					"responseResult":  "FAILED POST",
+					"responseBody":    string(Outboundbody),
+					"responseStatus":  OutboundResponse.Status,
+					"responseHeaders": OutboundResponse.Header,
+					"processTime":     time.Now().UTC(),
+				}
+			}
 
-						grpcLog.Infoln("response Body         : paymentRT")
-						tInboundBody = map[string]interface{}{
-							"transactionId":   t_InboundPayload["transactionId"],
-							"eventId":         t_InboundPayload["eventId"],
-							"eventType":       t_InboundPayload["eventType"],
-							"responseStatus":  InboundResponse.Status,
-							"responseHeaders": InboundResponse.Header,
-							"processTime":     time.Now().UTC(),
-						}
+			// Inbound
+			apiInboundStart := time.Now()
 
-					} else {
-						// oh sh$t, its not a success so now to try and build a body to fault fix later
+			// https://golangtutorial.dev/tips/http-post-json-go/
+			InboundRequest, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(InboundBytes))
+			if err != nil {
+				grpcLog.Errorln("http.NewRequest error: ", err)
 
-						grpcLog.Infoln("response Body         :", string(Inboundbody))
-						grpcLog.Infoln("response Result       : FAILED POST")
-						tInboundBody = map[string]interface{}{
-							"transactionId":   t_InboundPayload["transactionId"],
-							"eventId":         t_InboundPayload["eventId"],
-							"eventType":       t_InboundPayload["eventType"],
-							"responseResult":  "FAILED POST",
-							"responseBody":    string(Inboundbody),
-							"responseStatus":  InboundResponse.Status,
-							"responseHeaders": InboundResponse.Header,
-							"processTime":     time.Now().UTC(),
-						}
-					}
+			}
 
+			InboundRequest.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+			InboundResponse, err := client.Do(InboundRequest)
+			if err != nil {
+				grpcLog.Errorln("client.Do error: ", err)
+
+			}
+			defer InboundResponse.Body.Close()
+
+			// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("API Call Time         :", time.Since(apiInboundStart).Seconds(), "Sec")
+
+			}
+
+			Inboundbody, err = io.ReadAll(InboundResponse.Body)
+			if err != nil {
+				grpcLog.Errorln("Inbound Body -> io.ReadAll(InboundResponse.Body) error: ", err)
+
+			}
+
+			var x_inboundbody map[string]interface{}
+			_ = json.Unmarshal(Inboundbody, &x_inboundbody)
+
+			if InboundResponse.Status == "200 OK" {
+
+				// it's a paymentRT or addProxyRT - SUCCESS
+				// lets build a body of the header and some additional information
+
+				tInboundBody = map[string]interface{}{
+					"transactionId":   t_InboundPayload["transactionId"],
+					"eventId":         t_InboundPayload["eventId"],
+					"eventType":       t_InboundPayload["eventType"],
+					"responseStatus":  InboundResponse.Status,
+					"responseHeaders": InboundResponse.Header,
+					"responseBody":    x_inboundbody,
+					"processTime":     time.Now().UTC(),
 				}
 
-			} else { // We're Reading data from file, so thats one call below for one file from above, loop iteration
+			} else if InboundResponse.Status == "204 No Content" {
 
-				// NOTE: Demo environment only available:
-				// 07:00 to 19:00
-				apiStart := time.Now()
+				// it's a paymentNRT or addProxyNRT - SUCCESS
+				// lets build a body of the header and some additional information
 
-				// https://golangtutorial.dev/tips/http-post-json-go/
-				request, err := http.NewRequest("POST", vGeneral.Httpposturl, bytes.NewBuffer(valueBytes))
-				if err != nil {
-					grpcLog.Errorln("http.NewRequest error: ", err)
-
+				tInboundBody = map[string]interface{}{
+					"transactionId":   t_InboundPayload["transactionId"],
+					"eventId":         t_InboundPayload["eventId"],
+					"eventType":       t_InboundPayload["eventType"],
+					"responseStatus":  InboundResponse.Status,
+					"responseHeaders": InboundResponse.Header,
+					"response Body":   "<...>NRT",
+					"processTime":     time.Now().UTC(),
 				}
 
-				request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+			} else {
 
-				response, err := client.Do(request)
-				if err != nil {
-					grpcLog.Errorln("client.Do error: ", err)
-
-				}
-				defer response.Body.Close()
-
-				// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("API Call Time         	:", time.Since(apiStart).Seconds(), "Sec")
-
-				}
-
-				body, _ = io.ReadAll(response.Body)
-				if vGeneral.Debuglevel > 2 {
-					grpcLog.Infoln("response Payload      	:")
-					grpcLog.Infoln("response Status       	:", response.Status)
-					grpcLog.Infoln("response Headers      	:", response.Header)
-
-					if response.Status == "200 OK" {
-						// it's a paymentNT or addPayeeRT - SUCCESS
-						// it's a paymentRT or addPayeeRT and we have a very big body
-
-						json.Unmarshal(body, &tBody)
-						if vGeneral.Echojson == 1 {
-							grpcLog.Infoln("response Body        	:")
-							prettyJSON(string(body))
-
-						} else {
-							grpcLog.Infoln("response Body         	: JSON Printing Disabled!")
-
-						}
-
-					} else if response.Status == "204 No Content" {
-						// it's a paymentNRT or addPayeeNRT- SUCCESS
-						// lets build a body of the header and some additional information
-
-						grpcLog.Infoln("response Body         	:")
-						tBody = map[string]interface{}{
-							"transactionId":   t_Payload["transactionId"],
-							"eventId":         t_Payload["eventId"],
-							"eventType":       t_Payload["eventType"],
-							"responseStatus":  response.Status,
-							"responseHeaders": response.Header,
-							"processTime":     time.Now().UTC(),
-						}
-
-					} else {
-						// oh sh$t, its not a success so now to try and build a body to fault fix later
-
-						grpcLog.Infoln("response Body        	:", string(body))
-
-						grpcLog.Infoln("response Result         : FAILED POST")
-						tBody = map[string]interface{}{
-							"transactionId":   t_Payload["transactionId"],
-							"eventId":         t_Payload["eventId"],
-							"eventType":       t_Payload["eventType"],
-							"responseResult":  "FAILED POST",
-							"responseBody":    string(body),
-							"responseStatus":  response.Status,
-							"responseHeaders": response.Header,
-							"processTime":     time.Now().UTC(),
-						}
-					}
-
+				tInboundBody = map[string]interface{}{
+					"transactionId":   t_InboundPayload["transactionId"],
+					"eventId":         t_InboundPayload["eventId"],
+					"eventType":       t_InboundPayload["eventType"],
+					"responseResult":  "FAILED POST",
+					"responseBody":    x_inboundbody,
+					"responseStatus":  InboundResponse.Status,
+					"responseHeaders": InboundResponse.Header,
+					"processTime":     time.Now().UTC(),
 				}
 
 			}
+
+			if vGeneral.Debuglevel > 2 {
+				prettyJSON, _ := formatJSON(Inboundbody)
+				grpcLog.Infoln("response Payload      :")
+				grpcLog.Infoln("response Status       :", InboundResponse.Status)
+				grpcLog.Infoln("response Headers      :", InboundResponse.Header)
+				grpcLog.Infoln("response Body         :", string(prettyJSON))
+			}
+
 		}
 
+		// Output Cycle
+		//
 		// event if we post to FS API or not, we want isolated control if we output to the json file.
 		if vGeneral.Json_to_file == 1 {
 
@@ -1152,36 +1158,37 @@ func runLoader(arg string) {
 			// Reading
 			// https://medium.com/kanoteknologi/better-way-to-read-and-write-json-file-in-golang-9d575b7254f2
 
-			if vGeneral.Json_from_file == 0 { // We're creating Fake Data
-				// We need to do 2 api calls, 1 each for outbound and inbound event.
+			// We need to do 2 api calls, 1 each for outbound and inbound event.
 
-				// Outbound
-				fileStart := time.Now()
+			// Outbound
+			fileStart := time.Now()
 
-				TransactionId := t_InboundPayload["transactionId"]
+			TransactionId := t_InboundPayload["transactionId"]
 
-				OutboundTagId := t_OutboundPayload["eventId"]
+			OutboundTagId := t_OutboundPayload["eventId"]
 
-				loc_in := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("Outbound Output Event         :", loc_in)
+			loc_in := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("Outbound Output Event         :", loc_in)
 
-				}
+			}
 
-				fd, err := json.MarshalIndent(t_OutboundPayload, "", " ")
-				if err != nil {
-					grpcLog.Errorln("MarshalIndent error", err)
+			fd, err := json.MarshalIndent(t_OutboundPayload, "", " ")
+			if err != nil {
+				grpcLog.Errorln("MarshalIndent error", err)
 
-				}
+			}
 
-				err = os.WriteFile(loc_in, fd, 0644)
-				if err != nil {
-					grpcLog.Errorln("os.WriteFile error", err)
+			err = os.WriteFile(loc_in, fd, 0644)
+			if err != nil {
+				grpcLog.Errorln("os.WriteFile error", err)
 
-				}
+			}
 
-				// Did we call the API endpoint above... if yes then do these steps
-				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+			// Did we call the API endpoint above... if yes then do these steps
+			if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+
+				if t_OutboundPayload["eventType"] == "paymentRT" || t_InboundPayload["eventType"] == "paymentRT" {
 
 					loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
 					if vGeneral.Debuglevel > 0 {
@@ -1200,115 +1207,67 @@ func runLoader(arg string) {
 						grpcLog.Errorln("os.WriteFile error", err)
 
 					}
-				}
-
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("Outbound JSON to File         :", time.Since(fileStart).Seconds(), "Sec")
-
-				}
-
-				// Inbound
-				fileStart = time.Now()
-
-				InboundTagId := t_InboundPayload["eventId"]
-
-				loc_in = fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("Inbound Output Event          :", loc_in)
-
-				}
-
-				fd, err = json.MarshalIndent(t_InboundPayload, "", " ")
-				if err != nil {
-					grpcLog.Errorln("MarshalIndent error", err)
-
-				}
-
-				err = os.WriteFile(loc_in, fd, 0644)
-				if err != nil {
-					grpcLog.Errorln("os.WriteFile error", err)
-
-				}
-
-				// Did we call the API endpoint above... if yes then do these steps
-				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
-
-					loc_out := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
-
-					if vGeneral.Debuglevel > 0 {
-						grpcLog.Infoln("engineResponse                :", loc_out)
-
-					}
-
-					fj, err := json.MarshalIndent(tInboundBody, "", " ")
-					if err != nil {
-						grpcLog.Errorln("MarshalIndent error", err)
-
-					}
-
-					err = os.WriteFile(loc_out, fj, 0644)
-					if err != nil {
-						grpcLog.Errorln("os.WriteFile error", err)
-
-					}
-				}
-
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("Inbound JSON to File          :", time.Since(fileStart).Seconds(), "Sec")
-
-				}
-
-			} else { // We're Reading data from file, so thats one call below for one file from above, loop iteration
-
-				fileStart := time.Now()
-
-				tagId := t_Payload["eventId"]
-
-				loc_in := fmt.Sprintf("%s%s%s.json", vGeneral.Output_path, pathSep, tagId)
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("Output Event                  :", loc_in)
-
-				}
-
-				fd, err := json.MarshalIndent(t_Payload, "", " ")
-				if err != nil {
-					grpcLog.Errorln("MarshalIndent error", err)
-
-				}
-
-				err = os.WriteFile(loc_in, fd, 0644)
-				if err != nil {
-					grpcLog.Errorln("os.WriteFile error", err)
-
-				}
-
-				// Did we call the API endpoint above... if yes then do these steps
-				if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
-
-					loc_out := fmt.Sprintf("%s%s%s-out.json", vGeneral.Output_path, pathSep, tagId)
-					if vGeneral.Debuglevel > 0 {
-						grpcLog.Infoln("engineResponse                :", loc_out)
-
-					}
-
-					fj, err := json.MarshalIndent(tBody, "", " ")
-					if err != nil {
-						grpcLog.Errorln("MarshalIndent error", err)
-
-					}
-
-					err = os.WriteFile(loc_out, fj, 0644)
-					if err != nil {
-						grpcLog.Errorln("os.WriteFile error", err)
-
-					}
-				}
-
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("JSON to File Time             :", time.Since(fileStart).Seconds(), "Sec")
+				} else {
 
 				}
 			}
+
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("Outbound JSON to File         :", time.Since(fileStart).Seconds(), "Sec")
+
+			}
+
+			// Inbound
+			fileStart = time.Now()
+
+			InboundTagId := t_InboundPayload["eventId"]
+
+			loc_in = fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("Inbound Output Event          :", loc_in)
+
+			}
+
+			fd, err = json.MarshalIndent(t_InboundPayload, "", " ")
+			if err != nil {
+				grpcLog.Errorln("MarshalIndent error", err)
+
+			}
+
+			err = os.WriteFile(loc_in, fd, 0644)
+			if err != nil {
+				grpcLog.Errorln("os.WriteFile error", err)
+
+			}
+
+			// Did we call the API endpoint above... if yes then do these steps
+			if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+
+				loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+
+				if vGeneral.Debuglevel > 0 {
+					grpcLog.Infoln("engineResponse                :", loc_out)
+
+				}
+
+				fj, err := json.MarshalIndent(tInboundBody, "", " ")
+				if err != nil {
+					grpcLog.Errorln("MarshalIndent error", err)
+
+				}
+
+				err = os.WriteFile(loc_out, fj, 0644)
+				if err != nil {
+					grpcLog.Errorln("os.WriteFile error", err)
+
+				}
+			}
+
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("Inbound JSON to File          :", time.Since(fileStart).Seconds(), "Sec")
+
+			}
+
 		}
 
 		if vGeneral.Debuglevel > 0 {

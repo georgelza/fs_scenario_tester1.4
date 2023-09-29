@@ -7,7 +7,6 @@ require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/go-playground/validator/v10 v10.13.0
 	github.com/google/uuid v1.3.0
-	github.com/thedevsaddam/gojsonq v2.3.0+incompatible
 	github.com/tkanos/gonfig v0.0.0-20210106201359-53e13348de2f
 	google.golang.org/grpc v1.46.0
 )

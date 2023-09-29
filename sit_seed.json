@@ -5,9 +5,9 @@
     ],
     
     "PaymentStreamNRT": [ 
-        "EFT",             # MSGType:  EFT   {"name": "EFT", "msgtype":"EFT"}
-        "RTC",             # MSGType:  RTCCT {"name": "RTC", "msgtype":"RTCCT"}
-        "ACD"              # MSGType:  900000 {"name": "ACD", "msgtype":"900000"}
+        "EFT",             # MSGType:  EFT   {"name": "EFT", "msgtype": "EFT"}
+        "RTC",             # MSGType:  RTCCT {"name": "RTC", "msgtype": "RTCCT"}
+        "ACD"              # MSGType:  900000 {"name": "ACD", "msgtype": "900000"}
     ],
 
     "LocalInstrument": {
