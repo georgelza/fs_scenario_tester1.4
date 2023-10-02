@@ -123,7 +123,7 @@ func loadConfig(params ...string) types.Tp_general {
 	if len(params) > 0 { // Input environment was specified, so lets use it
 		env = params[0]
 		grpcLog.Info("*")
-		grpcLog.Info("* Called with ", env)
+		grpcLog.Info("* Called with Argument => ", env)
 		grpcLog.Info("*")
 
 	}
@@ -153,13 +153,7 @@ func loadConfig(params ...string) types.Tp_general {
 		vGeneral.Cert_file = fmt.Sprintf("%s%s%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Cert_dir, pathSep, vGeneral.Cert_file)
 		vGeneral.Cert_key = fmt.Sprintf("%s%s%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Cert_dir, pathSep, vGeneral.Cert_key)
 
-		if vGeneral.Json_to_file == 1 {
-			vGeneral.Output_path = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Output_path)
-
-		} else {
-			vGeneral.Output_path = ""
-
-		}
+		vGeneral.Output_path = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Output_path)
 
 		if vGeneral.Json_from_file == 1 {
 			vGeneral.Input_path = fmt.Sprintf("%s%s%s", vGeneral.CurrentPath, pathSep, vGeneral.Input_path)
@@ -936,7 +930,7 @@ func runLoader(arg string) {
 			grpcLog.Infoln("eventTime assigned            :", t_OutboundPayload["eventTime"])
 			grpcLog.Infoln("creationDate assigned         :", t_OutboundPayload["creationDate"])
 
-			grpcLog.Infoln("Outbound        :")
+			grpcLog.Infoln("Outbound                      :")
 			grpcLog.Infoln("eventId assigned              :", t_OutboundPayload["eventId"])
 
 			if t_OutboundPayload["eventType"] == "paymentNRT" {
@@ -945,7 +939,7 @@ func runLoader(arg string) {
 
 			}
 
-			grpcLog.Infoln("Inbound         :")
+			grpcLog.Infoln("Inbound                       :")
 			grpcLog.Infoln("eventId assigned              :", t_InboundPayload["eventId"])
 
 			if t_InboundPayload["eventType"] == "paymentRT" || t_InboundPayload["eventType"] == "paymentNRT" {
@@ -980,6 +974,9 @@ func runLoader(arg string) {
 
 		if vGeneral.Call_fs_api == 1 { // POST to API endpoint
 
+			grpcLog.Info("")
+			grpcLog.Info("Call API Flow")
+
 			// We need to do 2 api calls, 1 each for outbound and inbound event.
 
 			// Outbound
@@ -1004,7 +1001,7 @@ func runLoader(arg string) {
 
 			// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
 			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("API Call Time         :", time.Since(apiOutboundStart).Seconds(), "Sec")
+				grpcLog.Infoln("API Outbound Call Time        :", time.Since(apiOutboundStart).Seconds(), "Sec")
 
 			}
 
@@ -1076,7 +1073,7 @@ func runLoader(arg string) {
 
 			// Did we call the API, how long did it take, do this here before we write to a file that will impact this time
 			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("API Call Time         :", time.Since(apiInboundStart).Seconds(), "Sec")
+				grpcLog.Infoln("API Inbound Call Time         :", time.Since(apiInboundStart).Seconds(), "Sec")
 
 			}
 
@@ -1135,19 +1132,31 @@ func runLoader(arg string) {
 			}
 
 			if vGeneral.Debuglevel > 2 {
-				prettyJSON, _ := formatJSON(Inboundbody)
+				makeprettyJSON, _ := formatJSON(Inboundbody)
 				grpcLog.Infoln("response Payload      :")
 				grpcLog.Infoln("response Status       :", InboundResponse.Status)
 				grpcLog.Infoln("response Headers      :", InboundResponse.Header)
-				grpcLog.Infoln("response Body         :", string(prettyJSON))
+				grpcLog.Infoln("response Body         :", string(makeprettyJSON))
 			}
 
 		}
 
 		// Output Cycle
 		//
-		// event if we post to FS API or not, we want isolated control if we output to the json file.
+		// event if we post to FS API or not, we want isolated control if we output to the engineResponse json output file.
+
+		// We have 2 steps here, first the original posted event, this is controlled by json_to_file,
+		// the 2ne is a always print, which is the api post response
+		TransactionId := t_InboundPayload["transactionId"]
+		OutboundTagId := t_OutboundPayload["eventId"]
+		InboundTagId := t_InboundPayload["eventId"]
+
+		fileStart := time.Now()
+
 		if vGeneral.Json_to_file == 1 {
+
+			grpcLog.Info("")
+			grpcLog.Info("JSON to File Flow")
 
 			//...................................
 			// Writing struct type to a JSON file
@@ -1161,12 +1170,8 @@ func runLoader(arg string) {
 			// We need to do 2 api calls, 1 each for outbound and inbound event.
 
 			// Outbound
-			fileStart := time.Now()
 
-			TransactionId := t_InboundPayload["transactionId"]
-
-			OutboundTagId := t_OutboundPayload["eventId"]
-
+			// The posted event
 			loc_in := fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
 			if vGeneral.Debuglevel > 0 {
 				grpcLog.Infoln("Outbound Output Event         :", loc_in)
@@ -1185,43 +1190,9 @@ func runLoader(arg string) {
 
 			}
 
-			// Did we call the API endpoint above... if yes then do these steps
-			if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
-
-				if t_OutboundPayload["eventType"] == "paymentRT" || t_InboundPayload["eventType"] == "paymentRT" {
-
-					loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
-					if vGeneral.Debuglevel > 0 {
-						grpcLog.Infoln("engineResponse                :", loc_out)
-
-					}
-
-					fj, err := json.MarshalIndent(tOutboundBody, "", " ")
-					if err != nil {
-						grpcLog.Errorln("MarshalIndent error", err)
-
-					}
-
-					err = os.WriteFile(loc_out, fj, 0644)
-					if err != nil {
-						grpcLog.Errorln("os.WriteFile error", err)
-
-					}
-				} else {
-
-				}
-			}
-
-			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("Outbound JSON to File         :", time.Since(fileStart).Seconds(), "Sec")
-
-			}
-
 			// Inbound
-			fileStart = time.Now()
 
-			InboundTagId := t_InboundPayload["eventId"]
-
+			// The posted event
 			loc_in = fmt.Sprintf("%s%s%s-%s.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
 			if vGeneral.Debuglevel > 0 {
 				grpcLog.Infoln("Inbound Output Event          :", loc_in)
@@ -1240,34 +1211,52 @@ func runLoader(arg string) {
 
 			}
 
-			// Did we call the API endpoint above... if yes then do these steps
-			if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
+		}
 
-				loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+		// Did we call the API endpoint above... if yes then do these steps
+		if vGeneral.Call_fs_api == 1 { // we need to call the API to get a output/response on paymentRT events
 
-				if vGeneral.Debuglevel > 0 {
-					grpcLog.Infoln("engineResponse                :", loc_out)
-
-				}
-
-				fj, err := json.MarshalIndent(tInboundBody, "", " ")
-				if err != nil {
-					grpcLog.Errorln("MarshalIndent error", err)
-
-				}
-
-				err = os.WriteFile(loc_out, fj, 0644)
-				if err != nil {
-					grpcLog.Errorln("os.WriteFile error", err)
-
-				}
-			}
-
+			// outbound engineResponse
+			loc_out := fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, OutboundTagId)
 			if vGeneral.Debuglevel > 0 {
-				grpcLog.Infoln("Inbound JSON to File          :", time.Since(fileStart).Seconds(), "Sec")
+				grpcLog.Infoln("Outbound engineResponse       :", loc_out)
 
 			}
 
+			fj, err := json.MarshalIndent(tOutboundBody, "", " ")
+			if err != nil {
+				grpcLog.Errorln("MarshalIndent error", err)
+
+			}
+
+			err = os.WriteFile(loc_out, fj, 0644)
+			if err != nil {
+				grpcLog.Errorln("os.WriteFile error", err)
+
+			}
+
+			// inbound engineResponse
+			loc_out = fmt.Sprintf("%s%s%s-%s-out.json", vGeneral.Output_path, pathSep, TransactionId, InboundTagId)
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("Inbound engineResponse        :", loc_out)
+
+			}
+
+			fj, err = json.MarshalIndent(tInboundBody, "", " ")
+			if err != nil {
+				grpcLog.Errorln("MarshalIndent error", err)
+
+			}
+
+			err = os.WriteFile(loc_out, fj, 0644)
+			if err != nil {
+				grpcLog.Errorln("os.WriteFile error", err)
+
+			}
+			if vGeneral.Debuglevel > 0 {
+				grpcLog.Infoln("JSON to File                  :", time.Since(fileStart).Seconds(), "Sec")
+
+			}
 		}
 
 		if vGeneral.Debuglevel > 0 {
@@ -1310,7 +1299,7 @@ func runLoader(arg string) {
 			grpcLog.Infoln("Start                         : ", vStart)
 			grpcLog.Infoln("End                           : ", vEnd)
 			grpcLog.Infoln("Duration                      : ", vEnd.Sub(vStart))
-			grpcLog.Infoln("Records                       : ", todo_count)
+			grpcLog.Infoln("Records Processed             : ", todo_count)
 
 			grpcLog.Infoln("")
 		}
